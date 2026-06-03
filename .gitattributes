@@ -1,0 +1,17 @@
+# Normalise line endings to LF in the repo; checkout as CRLF on Windows
+* text=auto
+
+# Force LF for scripts that must not have CRLF
+*.js    text eol=lf
+*.html  text eol=lf
+*.css   text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+*.txt   text eol=lf
+*.cmd   text eol=crlf
+
+# Binaries — no line-ending conversion
+*.ico   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary

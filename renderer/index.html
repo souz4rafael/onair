@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>onAIr</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <div id="app">
+
+    <!-- Control bar: slides in when mouse enters top zone -->
+    <div id="control-bar">
+
+      <!-- Left: icon + name + appearance controls -->
+      <div id="cb-left">
+        <img id="app-icon-img" src="../assets/app-icon.png" title="onAIr"/>
+        <span id="filename">onAIr</span>
+        <span class="label">Opacity</span>
+        <input type="range" id="sl-opacity" min="20" max="95" value="75" title="Background opacity"/>
+        <span class="label">Font</span>
+        <input type="range" id="sl-font" min="14" max="52" value="22" title="Font size"/>
+        <span class="label">Color</span>
+        <input type="color" id="pk-color" value="#f0f0f0" title="Font color"/>
+      </div>
+
+      <!-- Right: action buttons (fixed, never pushed off screen) -->
+      <div id="cb-right">
+        <button id="btn-move"     title="Toggle Move Mode (Ctrl+Alt+Home)">🔓</button>
+        <button id="btn-record"   title="Start/stop recording (Ctrl+Alt+R)">🎤</button>
+        <button id="btn-open"     title="Load script (Ctrl+Alt+O)">📂</button>
+        <button id="btn-protect"  title="Toggle screen-share visibility (currently hidden)">🙈</button>
+        <button id="btn-settings" title="Settings (Ctrl+Alt+,)">⚙️</button>
+        <button id="btn-minimize" title="Minimise to taskbar">—</button>
+        <button id="btn-close"    title="Quit">✕</button>
+      </div>
+
+    </div>
+
+    <!-- Scrollable text viewport -->
+    <div id="viewport">
+      <div id="content">
+        <div class="empty-state">
+          <p>Press <kbd>Ctrl+Alt+O</kbd> to load a script</p>
+          <p>or right-click a <code>.txt</code> file → <em>Open with onAIr</em></p>
+          <p class="hint">Scroll: <kbd>Ctrl+Alt+PgUp</kbd> ↑ &nbsp;·&nbsp; <kbd>Ctrl+Alt+PgDn</kbd> ↓</p>
+          <p class="hint">Record Q&amp;A: <kbd>Ctrl+Alt+R</kbd> &nbsp;·&nbsp; Switch mode: <kbd>Ctrl+Alt+M</kbd></p>
+        </div>
+      </div>
+
+      <!-- Q&A Panel: shown instead of script in Q&A mode -->
+      <div id="qa-panel">
+        <div id="qa-status-msg"></div>
+        <div id="qa-body">
+          <div class="qa-section-label">Client asked:</div>
+          <div id="qa-question"></div>
+          <div class="qa-section-label" id="qa-answer-label">Suggested answer:</div>
+          <div id="qa-answer"></div>
+        </div>
+      </div>
+
+      <div id="move-banner">🔓 Move Mode — drag to reposition · Ctrl+Alt+Home to lock</div>
+    </div>
+
+    <!-- Mode bar: recording indicator + Script/Q&A tabs -->
+    <div id="mode-bar">
+      <div id="rec-indicator">
+        <span id="rec-dot">●</span>
+        <span id="rec-label">REC</span>
+      </div>
+      <div id="mode-tabs">
+        <button class="mode-tab active" data-mode="script" title="Script mode">Script</button>
+        <button class="mode-tab"        data-mode="qa"     title="Q&amp;A mode (Ctrl+Alt+M)">Q&amp;A</button>
+      </div>
+    </div>
+
+    <!-- Thin progress bar at the bottom shows scroll position -->
+    <div id="progress-bar">
+      <div id="progress-fill"></div>
+    </div>
+
+  </div>
+  <script src="renderer.js"></script>
+</body>
+</html>

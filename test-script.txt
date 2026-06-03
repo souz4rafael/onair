@@ -1,0 +1,18 @@
+Bem-vindo ao Teleprompter Overlay!
+
+Este é um exemplo de script de apresentação.
+
+Slide 1 — Introdução
+• Contexto do cliente
+• Desafio atual
+• O que vamos apresentar hoje
+
+Slide 2 — Solução
+• Arquitetura proposta
+• Benefícios chave
+• Timeline de implementação
+
+Slide 3 — ROI e Próximos Passos
+• Estimativa de ganhos
+• Quick wins nos primeiros 30 dias
+• Como começar

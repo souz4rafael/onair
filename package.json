@@ -1,0 +1,52 @@
+{
+  "name": "onair",
+  "version": "1.0.0",
+  "description": "onAIr — AI-powered presentation teleprompter overlay for Windows",
+  "main": "main.js",
+  "author": "Rafael Souza",
+  "license": "MIT",
+  "keywords": ["teleprompter", "overlay", "electron", "presentation", "AI", "whisper"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rafasouza_microsoft/onair.git"
+  },
+  "scripts": {
+    "start": "cross-env ELECTRON_RUN_AS_NODE= electron .",
+    "start:win": "cmd /C \"set ELECTRON_RUN_AS_NODE=&& electron .\"",
+    "build": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.onair.app",
+    "productName": "onAIr",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/app-icon.ico"
+    },
+    "fileAssociations": [
+      {
+        "ext": "txt",
+        "name": "Text File",
+        "description": "Open with onAIr",
+        "role": "Viewer"
+      }
+    ],
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

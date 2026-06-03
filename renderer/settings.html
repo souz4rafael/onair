@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>onAIr — Settings</title>
+  <link rel="stylesheet" href="settings.css"/>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>onAIr Settings</h1>
+    </header>
+
+    <!-- Tabs -->
+    <nav id="tabs">
+      <button class="tab active" data-tab="ai">🤖 AI</button>
+      <button class="tab"        data-tab="audio">🎤 Audio</button>
+      <button class="tab"        data-tab="appearance">🎨 Appearance</button>
+    </nav>
+
+    <!-- AI tab -->
+    <section id="tab-ai" class="tab-panel active">
+
+      <div class="field">
+        <label for="ai-provider">Provider</label>
+        <select id="ai-provider">
+          <option value="azure">Azure OpenAI</option>
+          <option value="openai">OpenAI</option>
+          <option value="groq">Groq</option>
+        </select>
+      </div>
+
+      <!-- Azure section -->
+      <div id="section-azure" class="provider-section">
+        <div class="section-header">Azure OpenAI credentials</div>
+        <p class="section-hint">Your Azure OpenAI resource — needs a Whisper deployment and a GPT deployment.</p>
+        <div class="field">
+          <label for="az-endpoint">Endpoint URL <span class="ex">e.g. https://my-resource.openai.azure.com</span></label>
+          <input type="text" id="az-endpoint" placeholder="https://my-resource.openai.azure.com" autocomplete="off"/>
+        </div>
+        <div class="field">
+          <label for="az-key">API Key</label>
+          <div class="secret-wrap">
+            <input type="password" id="az-key" placeholder="••••••••••••••••" autocomplete="off"/>
+            <button class="eye-btn" data-for="az-key" title="Show/hide">👁</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="az-whisper">Whisper Deployment <span class="ex">e.g. whisper</span></label>
+          <input type="text" id="az-whisper" placeholder="whisper" autocomplete="off"/>
+        </div>
+        <div class="field">
+          <label for="az-chat">Chat Deployment <span class="ex">e.g. gpt-4o</span></label>
+          <input type="text" id="az-chat" placeholder="gpt-4o" autocomplete="off"/>
+        </div>
+        <div class="test-row">
+          <button class="btn-test" id="test-azure">Test Connection</button>
+          <span class="test-result" id="res-azure"></span>
+        </div>
+      </div>
+
+      <!-- OpenAI section -->
+      <div id="section-openai" class="provider-section" style="display:none">
+        <div class="section-header">OpenAI credentials</div>
+        <p class="section-hint">Direct OpenAI API — get your key at <strong>platform.openai.com</strong>.</p>
+        <div class="field">
+          <label for="oai-key">API Key <span class="ex">sk-…</span></label>
+          <div class="secret-wrap">
+            <input type="password" id="oai-key" placeholder="sk-••••••••••••" autocomplete="off"/>
+            <button class="eye-btn" data-for="oai-key" title="Show/hide">👁</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="oai-whisper-model">Whisper model <span class="ex">whisper-1</span></label>
+          <input type="text" id="oai-whisper-model" placeholder="whisper-1" autocomplete="off"/>
+        </div>
+        <div class="field">
+          <label for="oai-chat-model">Chat model <span class="ex">gpt-4o</span></label>
+          <input type="text" id="oai-chat-model" placeholder="gpt-4o" autocomplete="off"/>
+        </div>
+        <div class="test-row">
+          <button class="btn-test" id="test-openai">Test Connection</button>
+          <span class="test-result" id="res-openai"></span>
+        </div>
+      </div>
+
+      <!-- Groq section -->
+      <div id="section-groq" class="provider-section" style="display:none">
+        <div class="section-header">Groq credentials</div>
+        <p class="section-hint">Free tier available — get your key at <strong>console.groq.com</strong> → API Keys.</p>
+        <div class="field">
+          <label for="groq-key">API Key <span class="ex">gsk_…</span></label>
+          <div class="secret-wrap">
+            <input type="password" id="groq-key" placeholder="gsk-••••••••••••" autocomplete="off"/>
+            <button class="eye-btn" data-for="groq-key" title="Show/hide">👁</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="groq-whisper-model">Whisper model <span class="ex">whisper-large-v3</span></label>
+          <input type="text" id="groq-whisper-model" placeholder="whisper-large-v3" autocomplete="off"/>
+        </div>
+        <div class="field">
+          <label for="groq-chat-model">Chat model <span class="ex">llama-3.3-70b-versatile</span></label>
+          <input type="text" id="groq-chat-model" placeholder="llama-3.3-70b-versatile" autocomplete="off"/>
+        </div>
+        <div class="test-row">
+          <button class="btn-test" id="test-groq">Test Connection</button>
+          <span class="test-result" id="res-groq"></span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Audio tab -->
+    <section id="tab-audio" class="tab-panel">
+
+      <div class="section-header">Audio Input</div>
+      <p class="section-hint">Choose the microphone used when recording client questions.</p>
+
+      <div class="field">
+        <label for="audio-device">Microphone</label>
+        <div class="audio-row">
+          <select id="audio-device"></select>
+          <button class="btn-test" id="btn-refresh-audio" title="Refresh device list">↺ Refresh</button>
+        </div>
+        <p class="hint-tiny" id="audio-perm-hint" style="display:none;color:#fa5252">
+          ⚠️ Grant microphone permission first — click Refresh after allowing it in Electron.
+        </p>
+      </div>
+
+    </section>
+
+    <!-- Appearance tab -->
+    <section id="tab-appearance" class="tab-panel">
+
+      <div class="section-header">Overlay appearance</div>
+      <p class="section-hint">These are the defaults loaded on startup. You can still tweak them live in the control bar.</p>
+
+      <div class="field slider-field">
+        <label>Background opacity <span class="val" id="val-opacity">75%</span></label>
+        <input type="range" id="sl-opacity" min="20" max="95" value="75"/>
+      </div>
+
+      <div class="field slider-field">
+        <label>Font size <span class="val" id="val-font">22px</span></label>
+        <input type="range" id="sl-font" min="14" max="52" value="22"/>
+      </div>
+
+      <div class="field">
+        <label for="pk-color">Font colour</label>
+        <div class="color-row">
+          <input type="color" id="pk-color" value="#f0f0f0"/>
+          <span class="color-hex" id="color-hex">#f0f0f0</span>
+          <div class="color-presets">
+            <button class="preset" style="background:#f0f0f0" data-color="#f0f0f0" title="White"></button>
+            <button class="preset" style="background:#FFE066" data-color="#FFE066" title="Yellow"></button>
+            <button class="preset" style="background:#69db7c" data-color="#69db7c" title="Green"></button>
+            <button class="preset" style="background:#74c0fc" data-color="#74c0fc" title="Blue"></button>
+            <button class="preset" style="background:#ff6b6b" data-color="#ff6b6b" title="Red"></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field slider-field">
+        <label>Scroll step <span class="val" id="val-scroll">120px</span></label>
+        <input type="range" id="sl-scroll" min="40" max="400" step="10" value="120"/>
+        <p class="hint-tiny">Higher = faster scroll per keypress</p>
+      </div>
+
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <span id="save-status"></span>
+      <div class="footer-btns">
+        <button id="btn-cancel" class="btn-secondary">Cancel</button>
+        <button id="btn-save"   class="btn-primary">Save</button>
+      </div>
+    </footer>
+  </div>
+
+  <script src="settings.js"></script>
+</body>
+</html>

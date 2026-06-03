@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+out/
+
+# Electron logs & local dev artefacts
+electron-log.txt
+hotkey-log.txt
+*.log
+
+# OS artefacts
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Sensitive — config lives in %APPDATA%\onAIr\config.json, never in the repo
+# (each user enters their own API keys via Settings)
+config.json

@@ -1,0 +1,364 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-opacity: 0.75;
+  --font-size:  22px;
+  --font-color: #f0f0f0;
+  --ctrl-h:     44px;
+  --prog-h:     4px;
+  --radius:     12px;
+  --accent:     #4dabf7;
+}
+
+body {
+  background: transparent;
+  overflow: hidden;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── App shell ──────────────────────────────────────────── */
+#app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.55);
+}
+
+/* ── Control bar ────────────────────────────────────────── */
+#control-bar {
+  height: var(--ctrl-h);
+  flex-shrink: 0;
+  background: rgba(12, 12, 22, 0.96);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px 0 8px;
+  gap: 10px;
+
+  /* Draggable — entire bar moves the window */
+  -webkit-app-region: drag;
+
+  /* Hidden by default; slides in on hover */
+  opacity: 0;
+  transform: translateY(-100%);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+#app.ui-visible #control-bar {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Left group: icon + name + sliders — grows with window width */
+#cb-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-app-region: drag;
+}
+
+/* App icon in the control bar */
+#app-icon-img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 4px;
+  -webkit-app-region: no-drag;
+  pointer-events: none;
+}
+
+#filename {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+/* Right group: action buttons — fixed, never shrinks */
+#cb-right {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+}
+
+/* Legacy selector kept for any leftover refs */
+#controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+}
+
+.label {
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 10px;
+  letter-spacing: 0.3px;
+  -webkit-app-region: no-drag;
+}
+
+input[type="range"] {
+  width: 60px;
+  height: 3px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+input[type="color"] {
+  width: 24px;
+  height: 20px;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+  padding: 1px;
+  -webkit-app-region: no-drag;
+}
+
+button {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s;
+  -webkit-app-region: no-drag;
+}
+button:hover          { background: rgba(255,255,255,0.14); color: #fff; }
+#btn-close:hover      { background: rgba(210,40,40,0.65);  color: #fff; }
+
+/* ── Text viewport ──────────────────────────────────────── */
+#viewport {
+  flex: 1;
+  background: rgba(8, 8, 14, var(--bg-opacity));
+  overflow: hidden;
+  position: relative;
+}
+
+/* Soft fade at top + bottom edges for readability */
+#viewport::before,
+#viewport::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 44px;
+  pointer-events: none;
+  z-index: 1;
+}
+#viewport::before {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(8,8,14,var(--bg-opacity)), transparent);
+}
+#viewport::after {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(8,8,14,var(--bg-opacity)), transparent);
+}
+
+#content {
+  padding: 24px 32px;
+  color: var(--font-color);
+  font-size: var(--font-size);
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+  will-change: transform;  /* GPU layer for smooth scrolling */
+}
+
+/* ── Empty / placeholder state ──────────────────────────── */
+.empty-state {
+  color: rgba(255, 255, 255, 0.28);
+  font-size: 15px;
+  line-height: 2.1;
+  text-align: center;
+  padding-top: 10px;
+}
+.empty-state .hint {
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+kbd, code {
+  background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: 'Consolas', 'Cascadia Code', monospace;
+  font-size: 0.9em;
+}
+
+/* ── Move Mode ──────────────────────────────────────────── */
+/* When active: colored border + drag cursor show state clearly */
+#app.move-mode {
+  outline: 2px solid rgba(77, 171, 247, 0.8);
+  box-shadow: 0 0 0 2px rgba(77, 171, 247, 0.3), 0 8px 40px rgba(0, 0, 0, 0.55);
+}
+
+#app.move-mode #control-bar {
+  opacity: 1;
+  transform: translateY(0);
+  background: rgba(10, 30, 60, 0.97);
+  border-bottom: 1px solid rgba(77, 171, 247, 0.4);
+}
+
+#app.move-mode #btn-move {
+  color: var(--accent);
+  background: rgba(77, 171, 247, 0.15);
+}
+
+/* Move mode banner */
+#move-banner {
+  display: none;
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(77, 171, 247, 0.15);
+  border: 1px solid rgba(77, 171, 247, 0.4);
+  color: var(--accent);
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+#app.move-mode #move-banner {
+  display: block;
+}
+
+/* ── Progress bar ───────────────────────────────────────── */
+/* ── Q&A Panel ──────────────────────────────────────────────────────────────── */
+#qa-panel {
+  display: none;
+  padding: 18px 28px;
+  overflow-y: auto;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+#app.qa-mode #qa-panel { display: block; }
+#app.qa-mode #content  { display: none; }
+
+#qa-status-msg {
+  color: var(--accent);
+  font-size: var(--font-size);
+  text-align: center;
+  padding: 30px 0;
+  opacity: 0.8;
+}
+
+#qa-body { display: none; }
+#qa-status-msg:empty + #qa-body { display: block; }
+
+.qa-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 6px;
+  margin-top: 14px;
+}
+.qa-section-label:first-child { margin-top: 0; }
+
+#qa-question {
+  color: var(--accent);
+  font-size: var(--font-size);
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+#qa-answer {
+  color: var(--font-color);
+  font-size: var(--font-size);
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+/* ── Mode bar ────────────────────────────────────────────────────────────────── */
+#mode-bar {
+  height: 24px;
+  flex-shrink: 0;
+  background: rgba(5, 5, 10, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+}
+
+#rec-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #ff6b6b;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+#app.recording #rec-indicator { opacity: 1; }
+
+#rec-dot { font-size: 8px; }
+#app.recording #rec-dot { animation: blink 1s step-start infinite; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+#mode-tabs {
+  display: flex;
+  gap: 2px;
+}
+
+.mode-tab {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: rgba(255,255,255,0.3);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+  padding: 1px 8px;
+  transition: color 0.15s, border-color 0.15s;
+  -webkit-app-region: no-drag;
+}
+.mode-tab:hover  { color: rgba(255,255,255,0.7); }
+.mode-tab.active { color: var(--accent); border-color: rgba(77,171,247,0.35); }
+#app.qa-mode .mode-tab[data-mode="qa"] { color: #69db7c; border-color: rgba(105,219,124,0.35); }
+
+#btn-record.recording {
+  color: #ff6b6b !important;
+  animation: blink 1s step-start infinite;
+}
+
+/* ── Progress bar ────────────────────────────────────────────────────────────── */
+#progress-bar {
+  height: var(--prog-h);
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.07);
+}
+#progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  transition: width 0.08s linear;
+}
