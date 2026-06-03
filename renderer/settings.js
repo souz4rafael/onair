@@ -50,8 +50,10 @@ const presentationCtxEl    = document.getElementById('presentation-context');
 const btnResetPrompt       = document.getElementById('btn-reset-prompt');
 
 // ── DOM refs — Audio ──────────────────────────────────────────────────────────
-const audioDeviceSel = document.getElementById('audio-device');
-const audioPemHint   = document.getElementById('audio-perm-hint');
+const audioDeviceSel    = document.getElementById('audio-device');
+const audioOutputSel    = document.getElementById('audio-output-device');
+const audioPemHint      = document.getElementById('audio-perm-hint');
+const recSourceInputs   = document.querySelectorAll('input[name="rec-source"]');
 
 // ── DOM refs — Appearance ─────────────────────────────────────────────────────
 const slOpacity  = document.getElementById('sl-opacity');
@@ -126,7 +128,7 @@ async function loadConfig() {
   populate(cfg);
 }
 
-function populate(cfg) {
+async function populate(cfg) {
   // Provider
   providerSel.value = cfg.provider || 'azure';
   showProviderSection(providerSel.value);
@@ -171,7 +173,10 @@ function populate(cfg) {
   syncPresetHighlight();
 
   // Audio
-  populateAudioDevices(cfg.audioDeviceId || '');
+  const recSource = cfg.audioRecordingSource || 'microphone';
+  recSourceInputs.forEach(r => { r.checked = r.value === recSource; });
+  await populateAudioDevices(cfg.audioDeviceId || '');
+  await populateOutputDevices(cfg.audioOutputDeviceId || '');
 }
 
 function buildConfig() {
@@ -201,7 +206,9 @@ function buildConfig() {
       scrollSpeed:         parseInt(slSpeed.value, 10),
       voiceRmsThreshold:   parseInt(slRms.value, 10),
     },
-    audioDeviceId: audioDeviceSel.value || '',
+    audioDeviceId:       audioDeviceSel.value || '',
+    audioOutputDeviceId: audioOutputSel.value || '',
+    audioRecordingSource: [...recSourceInputs].find(r => r.checked)?.value || 'microphone',
     systemPrompt:         systemPromptEl.value.trim(),
     presentationContext:  presentationCtxEl.value.trim(),
   };
@@ -260,8 +267,27 @@ async function populateAudioDevices(savedId = '') {
     audioDeviceSel.value = target;
 }
 
+async function populateOutputDevices(savedId = '') {
+  const devices  = await navigator.mediaDevices.enumerateDevices();
+  const outputs  = devices.filter(d => d.kind === 'audiooutput');
+  audioOutputSel.innerHTML = '<option value="">System default</option>';
+  for (const d of outputs) {
+    const opt       = document.createElement('option');
+    opt.value       = d.deviceId;
+    opt.textContent = d.label || `Speaker (${d.deviceId.slice(0, 8)}…)`;
+    audioOutputSel.appendChild(opt);
+  }
+  const target = savedId || audioOutputSel.value;
+  if (target && [...audioOutputSel.options].some(o => o.value === target))
+    audioOutputSel.value = target;
+}
+
 document.getElementById('btn-refresh-audio').addEventListener('click', () =>
   populateAudioDevices(audioDeviceSel.value)
+);
+
+document.getElementById('btn-refresh-output').addEventListener('click', () =>
+  populateOutputDevices(audioOutputSel.value)
 );
 
 // ── Save / Cancel ─────────────────────────────────────────────────────────────

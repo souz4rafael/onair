@@ -48,6 +48,8 @@ const DEFAULT_CONFIG = {
     voiceRmsThreshold: 15,
   },
   audioDeviceId: '',
+  audioOutputDeviceId: '',
+  audioRecordingSource: 'microphone',  // 'microphone' | 'system' | 'both'
   systemPrompt: 'You are a helpful assistant supporting a sales or technical presentation. The presenter received a question from a client and needs a concise answer they can read aloud. Respond in the same language as the question. Keep your answer clear and under 4 sentences.',
   presentationContext: '',
 };
@@ -72,7 +74,9 @@ function loadConfig() {
       openai:        { ...DEFAULT_CONFIG.openai,  ...(disk.openai  || {}) },
       groq:          { ...DEFAULT_CONFIG.groq,    ...(disk.groq    || {}) },
       appearance:    { ...DEFAULT_CONFIG.appearance, ...(disk.appearance || {}) },
-      audioDeviceId: disk.audioDeviceId || '',
+      audioDeviceId:        disk.audioDeviceId        || '',
+      audioOutputDeviceId:  disk.audioOutputDeviceId  || '',
+      audioRecordingSource: disk.audioRecordingSource || 'microphone',
       systemPrompt:        disk.systemPrompt        ?? DEFAULT_CONFIG.systemPrompt,
       presentationContext: disk.presentationContext || '',
     };
@@ -197,7 +201,12 @@ function createWindow() {
   win.setAlwaysOnTop(true, 'screen-saver');
 
   win.webContents.on('did-finish-load', () => {
-    win.webContents.send('apply-config', { ...config.appearance, audioDeviceId: config.audioDeviceId });
+    win.webContents.send('apply-config', {
+      ...config.appearance,
+      audioDeviceId:        config.audioDeviceId,
+      audioOutputDeviceId:  config.audioOutputDeviceId,
+      audioRecordingSource: config.audioRecordingSource,
+    });
     const file = findTxtArg(process.argv);
     if (file) sendScript(file);
   });
@@ -580,7 +589,12 @@ ipcMain.handle('get-config',  () => config);
 ipcMain.handle('save-config', (_, newConfig) => {
   config = newConfig;
   saveConfig();
-  win?.webContents.send('apply-config', { ...config.appearance, audioDeviceId: config.audioDeviceId });
+  win?.webContents.send('apply-config', {
+    ...config.appearance,
+    audioDeviceId:        config.audioDeviceId,
+    audioOutputDeviceId:  config.audioOutputDeviceId,
+    audioRecordingSource: config.audioRecordingSource,
+  });
   return { ok: true };
 });
 

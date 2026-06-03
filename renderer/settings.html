@@ -134,11 +134,44 @@
     <!-- Audio tab -->
     <section id="tab-audio" class="tab-panel">
 
-      <div class="section-header">Audio Input</div>
-      <p class="section-hint">Choose the microphone used when recording client questions.</p>
+      <div class="section-header">Recording source</div>
+      <p class="section-hint">Choose what audio to capture when recording a client question.</p>
 
       <div class="field">
-        <label for="audio-device">Microphone</label>
+        <div class="radio-group" id="recording-source-group">
+          <label class="radio-label">
+            <input type="radio" name="rec-source" value="microphone" checked/>
+            <span>
+              <strong>Microphone</strong>
+              <em>Your own voice — use this for in-person presentations</em>
+            </span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="rec-source" value="system"/>
+            <span>
+              <strong>System audio</strong>
+              <em>What you hear — via screen-share dialog (Teams/Zoom remote meetings)</em>
+            </span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="rec-source" value="both"/>
+            <span>
+              <strong>Both</strong>
+              <em>Microphone + system audio mixed — best for hybrid scenarios</em>
+            </span>
+          </label>
+        </div>
+        <p class="hint-tiny" style="margin-top:8px">
+          💡 For virtual meetings without screen-share: enable <strong>Stereo Mix</strong> in Windows Sound settings, or install
+          <strong>VB-Cable</strong> (free) — it then appears as a microphone below.
+        </p>
+      </div>
+
+      <div class="section-header" style="margin-top:14px">Microphone</div>
+      <p class="section-hint" id="mic-hint">Input device used in Microphone and Both modes.</p>
+
+      <div class="field">
+        <label for="audio-device">Device</label>
         <div class="audio-row">
           <select id="audio-device"></select>
           <button class="btn-test" id="btn-refresh-audio" title="Refresh device list">↺ Refresh</button>
@@ -146,6 +179,17 @@
         <p class="hint-tiny" id="audio-perm-hint" style="display:none;color:#fa5252">
           ⚠️ Grant microphone permission first — click Refresh after allowing it in Electron.
         </p>
+      </div>
+
+      <div class="section-header" style="margin-top:14px">Speaker / output</div>
+      <p class="section-hint">Output device for audio playback (stored for future audio features).</p>
+
+      <div class="field">
+        <label for="audio-output-device">Device</label>
+        <div class="audio-row">
+          <select id="audio-output-device"></select>
+          <button class="btn-test" id="btn-refresh-output" title="Refresh output device list">↺ Refresh</button>
+        </div>
       </div>
 
     </section>

@@ -34,7 +34,8 @@ let isRecording  = false;
 let currentMode  = 'script'; // 'script' | 'qa'
 let mediaRecorder = null;
 let audioChunks   = [];
-let savedAudioDeviceId = ''; // set via apply-config when settings are saved
+let savedAudioDeviceId    = ''; // set via apply-config when settings are saved
+let savedRecordingSource  = 'microphone'; // 'microphone' | 'system' | 'both'
 
 // Scroll mode state
 const SCROLL_MODES  = ['manual', 'auto', 'voice', 'track'];
@@ -172,11 +173,42 @@ async function toggleRecording() {
 
 async function startRecording() {
   try {
-    const audioConstraints = savedAudioDeviceId
-      ? { deviceId: { exact: savedAudioDeviceId } }
-      : true;
-    const stream   = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints, video: false });
-    audioChunks    = [];
+    let stream;
+    const source = savedRecordingSource || 'microphone';
+
+    if (source === 'microphone') {
+      const audioConstraints = savedAudioDeviceId
+        ? { deviceId: { exact: savedAudioDeviceId } } : true;
+      stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints, video: false });
+
+    } else if (source === 'system') {
+      // Capture system audio via screen-share API (user selects window + checks "share audio")
+      const display = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: true });
+      display.getVideoTracks().forEach(t => t.stop()); // drop video immediately
+      stream = display;
+
+    } else if (source === 'both') {
+      const audioConstraints = savedAudioDeviceId
+        ? { deviceId: { exact: savedAudioDeviceId } } : true;
+      const [micStream, displayStream] = await Promise.all([
+        navigator.mediaDevices.getUserMedia({ audio: audioConstraints, video: false }),
+        navigator.mediaDevices.getDisplayMedia({ audio: true, video: true }),
+      ]);
+      displayStream.getVideoTracks().forEach(t => t.stop());
+
+      // Mix both streams with AudioContext
+      const ctx  = new AudioContext();
+      const dest = ctx.createMediaStreamDestination();
+      ctx.createMediaStreamSource(micStream).connect(dest);
+      if (displayStream.getAudioTracks().length)
+        ctx.createMediaStreamSource(displayStream).connect(dest);
+      stream = dest.stream;
+      // Tag for cleanup on stop
+      stream._extraTracks = [...micStream.getTracks(), ...displayStream.getTracks()];
+      stream._audioCtx    = ctx;
+    }
+
+    audioChunks   = [];
     const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
       ? 'audio/webm;codecs=opus' : 'audio/webm';
     mediaRecorder  = new MediaRecorder(stream, { mimeType });
@@ -187,18 +219,23 @@ async function startRecording() {
     mediaRecorder.start(500);
 
     setRecordingUI(true);
-    showQAStatus('🎤 Recording… press R again to stop');
+    const sourceLabel = { microphone: '🎤', system: '🔊', both: '🎤+🔊' }[source] || '🎤';
+    showQAStatus(`${sourceLabel} Recording… press R again to stop`);
     setMode('qa');
   } catch (e) {
-    showQAStatus(`❌ Microphone error: ${e.message}`);
+    showQAStatus(`❌ Audio error: ${e.message}`);
     setMode('qa');
   }
 }
 
 function stopRecording() {
   if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    const stream = mediaRecorder.stream;
     mediaRecorder.stop();
-    mediaRecorder.stream.getTracks().forEach(t => t.stop());
+    // Clean up mixed stream resources
+    if (stream._extraTracks) stream._extraTracks.forEach(t => t.stop());
+    if (stream._audioCtx)    stream._audioCtx.close().catch(() => {});
+    stream.getTracks().forEach(t => t.stop());
   }
   setRecordingUI(false);
   recLabel.textContent = '⏳';
@@ -272,7 +309,8 @@ window.tp.onApplyConfig((a) => {
   if (a.opacity   != null) document.documentElement.style.setProperty('--bg-opacity', a.opacity / 100);
   if (a.fontSize  != null) { document.documentElement.style.setProperty('--font-size', `${a.fontSize}px`); requestAnimationFrame(recalcMaxScroll); }
   if (a.fontColor != null) document.documentElement.style.setProperty('--font-color', a.fontColor);
-  if (a.audioDeviceId != null) savedAudioDeviceId = a.audioDeviceId;
+  if (a.audioDeviceId    != null) savedAudioDeviceId   = a.audioDeviceId;
+  if (a.audioRecordingSource != null) savedRecordingSource = a.audioRecordingSource;
   if (a.scrollSpeed   != null) scrollSpeed = a.scrollSpeed;
   if (a.voiceRmsThreshold != null) voiceRmsThreshold = a.voiceRmsThreshold / 1000;
 });
