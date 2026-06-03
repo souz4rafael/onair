@@ -5,19 +5,26 @@
   "main": "main.js",
   "author": "Rafael Souza",
   "license": "MIT",
-  "keywords": ["teleprompter", "overlay", "electron", "presentation", "AI", "whisper"],
+  "keywords": [
+    "teleprompter",
+    "overlay",
+    "electron",
+    "presentation",
+    "AI",
+    "whisper"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/rafasouza_microsoft/onair.git"
   },
   "scripts": {
-    "start": "cross-env ELECTRON_RUN_AS_NODE= electron .",
-    "start:win": "cmd /C \"set ELECTRON_RUN_AS_NODE=&& electron .\"",
-    "build": "electron-builder --win"
+    "start": "cmd /C \"set ELECTRON_RUN_AS_NODE=&& electron .\"",
+    "build": "cmd /C \"set CSC_IDENTITY_AUTO_DISCOVERY=false&& electron-builder --win\"",
+    "build:portable": "cmd /C \"set CSC_IDENTITY_AUTO_DISCOVERY=false&& electron-builder --win portable\""
   },
   "devDependencies": {
     "electron": "^28.3.3",
-    "electron-builder": "^24.13.3"
+    "electron-builder": "^26.8.1"
   },
   "build": {
     "appId": "com.onair.app",
