@@ -17,6 +17,13 @@ const btnRecord   = document.getElementById('btn-record');
 const btnProtect  = document.getElementById('btn-protect');
 const progFill    = document.getElementById('progress-fill');
 
+// Scroll mode DOM refs
+const btnScrollMode = document.getElementById('btn-scroll-mode');
+const speedCtrlEl   = document.getElementById('speed-ctrl');
+const speedLabelEl  = document.getElementById('speed-label');
+const btnSpeedDec   = document.getElementById('btn-speed-dec');
+const btnSpeedInc   = document.getElementById('btn-speed-inc');
+
 // Q&A DOM refs
 const qaPanel     = document.getElementById('qa-panel');
 const qaStatusMsg = document.getElementById('qa-status-msg');
@@ -35,6 +42,27 @@ let currentMode  = 'script'; // 'script' | 'qa'
 let mediaRecorder = null;
 let audioChunks   = [];
 let savedAudioDeviceId = ''; // set via apply-config when settings are saved
+
+// Scroll mode state
+const SCROLL_MODES  = ['manual', 'auto', 'voice', 'track'];
+const SCROLL_ICONS  = { manual: '⏸', auto: '▶', voice: '🎙', track: '👁' };
+let scrollMode      = 'manual';
+let scrollSpeed     = 50;     // px per second
+let autoScrollRaf   = null;
+let lastRafTime     = null;
+let isSpeaking      = false;
+
+// Voice monitor
+let voiceAudioCtx  = null;
+let voiceAnalyser  = null;
+let voiceStream    = null;
+let voiceTimerId   = null;
+const VOICE_RMS_THRESHOLD = 0.015;
+
+// Word tracking
+let wordSpans      = [];
+let trackWordIdx   = 0;
+let recognition    = null;
 
 // ── Move Mode ─────────────────────────────────────────────────────────────────
 // Ctrl+Alt+Home (or 🔓 button) toggles interactive/click-through.
@@ -90,9 +118,13 @@ window.tp.onHotkeyStatus(({ registered, failed }) => {
 
 // ── Script loading ────────────────────────────────────────────────────────────
 window.tp.onLoadScript(({ text, filePath }) => {
-  contentEl.textContent = text;
+  tokenizeScript(text);
   scrollY = 0;
   applyScroll();
+  updateProgress();
+
+  // Reset word tracking cursor on new script
+  trackWordIdx = 0;
 
   const name = filePath.replace(/\\/g, '/').split('/').pop();
   filenameEl.textContent = name;
@@ -274,3 +306,208 @@ btnMinimize.addEventListener('click', () => window.tp.minimize());
 
 // ── Resize observer ───────────────────────────────────────────────────────────
 new ResizeObserver(() => recalcMaxScroll()).observe(viewportEl);
+
+// ── Scroll modes ──────────────────────────────────────────────────────────────
+
+btnScrollMode.addEventListener('click', () => {
+  const idx  = SCROLL_MODES.indexOf(scrollMode);
+  const next = SCROLL_MODES[(idx + 1) % SCROLL_MODES.length];
+  setScrollMode(next);
+});
+
+btnSpeedDec.addEventListener('click', () => { scrollSpeed = Math.max(10, scrollSpeed - 10); updateSpeedLabel(); });
+btnSpeedInc.addEventListener('click', () => { scrollSpeed = Math.min(400, scrollSpeed + 10); updateSpeedLabel(); });
+
+function updateSpeedLabel() { speedLabelEl.textContent = `${scrollSpeed}px/s`; }
+
+function setScrollMode(mode) {
+  // Tear down previous mode
+  stopAutoScroll();
+  stopVoiceMonitor();
+  stopWordTracking();
+  wordSpans.forEach(s => s.classList.remove('word-current', 'word-spoken'));
+
+  scrollMode = mode;
+  btnScrollMode.textContent = `${SCROLL_ICONS[mode]} ${mode.charAt(0).toUpperCase() + mode.slice(1)}`;
+  btnScrollMode.title = `Scroll mode: ${mode} — click to cycle`;
+  speedCtrlEl.style.display = (mode === 'auto' || mode === 'voice') ? 'inline-flex' : 'none';
+  appEl.dataset.scrollMode = mode;
+
+  if (mode === 'auto')  { startAutoScroll(); }
+  if (mode === 'voice') { startVoiceMonitor(); startAutoScroll(); }
+  if (mode === 'track') { startWordTracking(); }
+}
+
+// ── Auto-scroll (RAF loop) ────────────────────────────────────────────────────
+
+function startAutoScroll() {
+  lastRafTime = null;
+  function tick(ts) {
+    if (autoScrollRaf === null) return; // was stopped
+    if (!lastRafTime) lastRafTime = ts;
+    const dtSec = Math.min((ts - lastRafTime) / 1000, 0.1); // cap at 100ms
+    lastRafTime = ts;
+
+    const active = scrollMode === 'auto' || (scrollMode === 'voice' && isSpeaking);
+    if (active && scrollY < maxScroll) {
+      recalcMaxScroll();
+      scrollY = Math.min(maxScroll, scrollY + scrollSpeed * dtSec);
+      applyScroll();
+      updateProgress();
+    }
+    autoScrollRaf = requestAnimationFrame(tick);
+  }
+  autoScrollRaf = requestAnimationFrame(tick);
+}
+
+function stopAutoScroll() {
+  if (autoScrollRaf !== null) { cancelAnimationFrame(autoScrollRaf); autoScrollRaf = null; }
+  lastRafTime = null;
+}
+
+// ── Voice-activated scroll (AudioContext RMS) ─────────────────────────────────
+
+async function startVoiceMonitor() {
+  try {
+    const constraints = savedAudioDeviceId
+      ? { audio: { deviceId: { exact: savedAudioDeviceId } }, video: false }
+      : { audio: true, video: false };
+    voiceStream   = await navigator.mediaDevices.getUserMedia(constraints);
+    voiceAudioCtx = new AudioContext();
+    voiceAnalyser = voiceAudioCtx.createAnalyser();
+    voiceAnalyser.fftSize = 512;
+    voiceAudioCtx.createMediaStreamSource(voiceStream).connect(voiceAnalyser);
+
+    const buf = new Float32Array(voiceAnalyser.fftSize);
+    function checkVolume() {
+      if (scrollMode !== 'voice') return;
+      voiceAnalyser.getFloatTimeDomainData(buf);
+      const rms  = Math.sqrt(buf.reduce((s, v) => s + v * v, 0) / buf.length);
+      isSpeaking = rms > VOICE_RMS_THRESHOLD;
+      voiceTimerId = setTimeout(checkVolume, 50); // 20 checks/sec
+    }
+    checkVolume();
+  } catch (e) {
+    console.warn('[voice-scroll] Mic error:', e.message);
+  }
+}
+
+function stopVoiceMonitor() {
+  if (voiceTimerId)  { clearTimeout(voiceTimerId);  voiceTimerId  = null; }
+  if (voiceStream)   { voiceStream.getTracks().forEach(t => t.stop()); voiceStream = null; }
+  if (voiceAudioCtx) { voiceAudioCtx.close().catch(() => {}); voiceAudioCtx = null; }
+  voiceAnalyser = null;
+  isSpeaking    = false;
+}
+
+// ── Word tokenizer ────────────────────────────────────────────────────────────
+
+function tokenizeScript(text) {
+  contentEl.innerHTML = '';
+  wordSpans    = [];
+  trackWordIdx = 0;
+
+  // Split on whitespace, keeping the whitespace tokens for layout
+  const parts = text.split(/(\s+)/);
+  let idx = 0;
+  for (const part of parts) {
+    if (/^\s+$/.test(part)) {
+      // Preserve newlines as actual line breaks
+      const lines = part.split('\n');
+      for (let i = 0; i < lines.length; i++) {
+        if (i > 0) contentEl.appendChild(document.createElement('br'));
+        if (lines[i]) contentEl.appendChild(document.createTextNode(lines[i]));
+      }
+    } else if (part.length > 0) {
+      const span = document.createElement('span');
+      span.className = 'word';
+      span.dataset.wordIndex = idx;
+      span.textContent = part;
+      contentEl.appendChild(span);
+      wordSpans.push(span);
+      idx++;
+    }
+  }
+}
+
+// ── Word tracking (Web Speech API) ───────────────────────────────────────────
+
+function startWordTracking() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    console.warn('[word-track] SpeechRecognition not available in this Electron build.');
+    return;
+  }
+  if (!wordSpans.length) return;
+
+  recognition             = new SR();
+  recognition.continuous  = true;
+  recognition.interimResults = true;
+  recognition.lang        = navigator.language || 'en-US';
+
+  recognition.onresult = (event) => {
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const spoken = event.results[i][0].transcript.trim();
+      const words  = spoken.split(/\s+/).filter(Boolean);
+      for (const word of words) {
+        const match = matchWordInScript(word, trackWordIdx);
+        if (match !== -1) {
+          advanceWordHighlight(match);
+          trackWordIdx = match + 1;
+        }
+      }
+    }
+  };
+
+  recognition.onerror = (e) => {
+    if (e.error === 'no-speech') return; // normal during silence
+    console.warn('[word-track] error:', e.error);
+  };
+
+  recognition.onend = () => {
+    // Auto-restart so tracking continues uninterrupted
+    if (scrollMode === 'track') setTimeout(() => { try { recognition?.start(); } catch {} }, 200);
+  };
+
+  try { recognition.start(); } catch (e) { console.warn('[word-track] start failed:', e.message); }
+}
+
+function stopWordTracking() {
+  if (recognition) { try { recognition.stop(); } catch {} recognition = null; }
+  trackWordIdx = 0;
+}
+
+function normalizeWord(w) {
+  // Strip punctuation, lowercase — supports accented characters
+  return w.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+}
+
+function matchWordInScript(spoken, fromIdx) {
+  const norm  = normalizeWord(spoken);
+  if (!norm) return -1;
+  const limit = Math.min(fromIdx + 30, wordSpans.length); // look-ahead window
+  for (let i = fromIdx; i < limit; i++) {
+    const sw = normalizeWord(wordSpans[i].textContent);
+    if (sw === norm || sw.startsWith(norm) || norm.startsWith(sw)) return i;
+  }
+  return -1;
+}
+
+function advanceWordHighlight(idx) {
+  // Mark previous word as spoken
+  for (let i = 0; i < idx; i++) {
+    wordSpans[i].classList.remove('word-current');
+    wordSpans[i].classList.add('word-spoken');
+  }
+  // Highlight current word
+  wordSpans[idx].classList.remove('word-spoken');
+  wordSpans[idx].classList.add('word-current');
+
+  // Scroll to keep current word at ~35% from top of viewport
+  recalcMaxScroll();
+  const wordTop = wordSpans[idx].offsetTop;
+  const target  = Math.max(0, wordTop - viewportEl.clientHeight * 0.35);
+  scrollY = Math.min(maxScroll, target);
+  applyScroll();
+  updateProgress();
+}

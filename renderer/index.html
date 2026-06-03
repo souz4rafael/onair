@@ -26,6 +26,14 @@
 
       <!-- Right: action buttons (fixed, never pushed off screen) -->
       <div id="cb-right">
+        <div id="scroll-mode-ctrl">
+          <button id="btn-scroll-mode" title="Scroll mode — click to cycle">⏸ Manual</button>
+          <span id="speed-ctrl">
+            <button id="btn-speed-dec" title="Slower">−</button>
+            <span id="speed-label">50px/s</span>
+            <button id="btn-speed-inc" title="Faster">+</button>
+          </span>
+        </div>
         <button id="btn-move"     title="Toggle Move Mode (Ctrl+Alt+Home)">🔓</button>
         <button id="btn-record"   title="Start/stop recording (Ctrl+Alt+R)">🎤</button>
         <button id="btn-open"     title="Load script (Ctrl+Alt+O)">📂</button>
@@ -44,7 +52,8 @@
           <p>Press <kbd>Ctrl+Alt+O</kbd> to load a script</p>
           <p>or right-click a <code>.txt</code> file → <em>Open with onAIr</em></p>
           <p class="hint">Scroll: <kbd>Ctrl+Alt+PgUp</kbd> ↑ &nbsp;·&nbsp; <kbd>Ctrl+Alt+PgDn</kbd> ↓</p>
-          <p class="hint">Record Q&amp;A: <kbd>Ctrl+Alt+R</kbd> &nbsp;·&nbsp; Switch mode: <kbd>Ctrl+Alt+M</kbd></p>
+          <p class="hint">Auto-scroll: click <strong>⏸ Manual</strong> button to cycle modes</p>
+          <p class="hint">Record Q&amp;A: <kbd>Ctrl+Alt+R</kbd> &nbsp;·&nbsp; Switch view: <kbd>Ctrl+Alt+M</kbd></p>
         </div>
       </div>
 
