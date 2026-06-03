@@ -37,7 +37,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0 10px 0 8px;
-  gap: 10px;
+  gap: 6px;
 
   /* Draggable — entire bar moves the window */
   -webkit-app-region: drag;
@@ -53,15 +53,48 @@ body {
   transform: translateY(0);
 }
 
-/* Left group: icon + name + sliders — grows with window width */
+/* Left group: icon + name — grows with window width */
 #cb-left {
   display: flex;
   align-items: center;
   gap: 7px;
+  flex: 1;
   min-width: 0;
   overflow: hidden;
   -webkit-app-region: drag;
 }
+
+/* Centre group: record button — truly centred */
+#cb-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  -webkit-app-region: no-drag;
+}
+
+/* Record button — bigger and more prominent */
+#btn-record {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  color: rgba(255, 107, 107, 0.85);
+  background: rgba(255, 107, 107, 0.08);
+  display: none; /* hidden until Q&A mode */
+  -webkit-app-region: no-drag;
+}
+#btn-record:hover { background: rgba(255, 107, 107, 0.22); color: #ff6b6b; border-color: rgba(255,107,107,0.7); }
+#btn-record.recording {
+  color: #fff !important;
+  background: rgba(255, 107, 107, 0.7) !important;
+  border-color: #ff6b6b !important;
+  animation: blink 1s step-start infinite;
+}
+
+/* Show record button only in Q&A mode */
+#app.qa-mode #btn-record { display: inline-flex; align-items: center; gap: 5px; }
 
 /* App icon in the control bar */
 #app-icon-img {
@@ -345,11 +378,6 @@ kbd, code {
 .mode-tab.active { color: var(--accent); border-color: rgba(77,171,247,0.35); }
 #app.qa-mode .mode-tab[data-mode="qa"] { color: #69db7c; border-color: rgba(105,219,124,0.35); }
 
-#btn-record.recording {
-  color: #ff6b6b !important;
-  animation: blink 1s step-start infinite;
-}
-
 /* ── Progress bar ────────────────────────────────────────────────────────────── */
 #progress-bar {
   height: var(--prog-h);
@@ -363,11 +391,10 @@ kbd, code {
   transition: width 0.08s linear;
 }
 
-/* ── Scroll mode button & speed controls ───────────────────────────────────── */
+/* ── Scroll mode button ──────────────────────────────────────────────────────── */
 #scroll-mode-ctrl {
   display: flex;
   align-items: center;
-  gap: 2px;
   margin-right: 4px;
 }
 
@@ -385,28 +412,6 @@ kbd, code {
 [data-scroll-mode="auto"]  #btn-scroll-mode { color: #69db7c; border-color: rgba(105,219,124,0.4); }
 [data-scroll-mode="voice"] #btn-scroll-mode { color: #ff6b6b; border-color: rgba(255,107,107,0.4); }
 [data-scroll-mode="track"] #btn-scroll-mode { color: var(--accent); border-color: rgba(77,171,247,0.4); }
-
-#speed-ctrl {
-  display: none;
-  align-items: center;
-  gap: 2px;
-  margin-left: 2px;
-}
-
-#speed-label {
-  font-size: 10px;
-  color: rgba(255,255,255,0.4);
-  min-width: 44px;
-  text-align: center;
-  pointer-events: none;
-}
-
-#btn-speed-dec, #btn-speed-inc {
-  padding: 2px 6px;
-  font-size: 14px;
-  line-height: 1;
-  color: rgba(255,255,255,0.5);
-}
 
 /* ── Word tracking highlight ────────────────────────────────────────────────── */
 .word {

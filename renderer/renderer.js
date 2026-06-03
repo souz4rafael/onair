@@ -16,10 +16,6 @@ const progFill    = document.getElementById('progress-fill');
 
 // Scroll mode DOM refs
 const btnScrollMode = document.getElementById('btn-scroll-mode');
-const speedCtrlEl   = document.getElementById('speed-ctrl');
-const speedLabelEl  = document.getElementById('speed-label');
-const btnSpeedDec   = document.getElementById('btn-speed-dec');
-const btnSpeedInc   = document.getElementById('btn-speed-inc');
 
 // Q&A DOM refs
 const qaPanel     = document.getElementById('qa-panel');
@@ -277,7 +273,7 @@ window.tp.onApplyConfig((a) => {
   if (a.fontSize  != null) { document.documentElement.style.setProperty('--font-size', `${a.fontSize}px`); requestAnimationFrame(recalcMaxScroll); }
   if (a.fontColor != null) document.documentElement.style.setProperty('--font-color', a.fontColor);
   if (a.audioDeviceId != null) savedAudioDeviceId = a.audioDeviceId;
-  if (a.scrollSpeed   != null) { scrollSpeed = a.scrollSpeed; updateSpeedLabel(); }
+  if (a.scrollSpeed   != null) scrollSpeed = a.scrollSpeed;
   if (a.voiceRmsThreshold != null) voiceRmsThreshold = a.voiceRmsThreshold / 1000;
 });
 
@@ -299,11 +295,6 @@ btnScrollMode.addEventListener('click', () => {
   setScrollMode(next);
 });
 
-btnSpeedDec.addEventListener('click', () => { scrollSpeed = Math.max(10, scrollSpeed - 10); updateSpeedLabel(); });
-btnSpeedInc.addEventListener('click', () => { scrollSpeed = Math.min(400, scrollSpeed + 10); updateSpeedLabel(); });
-
-function updateSpeedLabel() { speedLabelEl.textContent = `${scrollSpeed}px/s`; }
-
 function setScrollMode(mode) {
   // Tear down previous mode
   stopAutoScroll();
@@ -314,7 +305,6 @@ function setScrollMode(mode) {
   scrollMode = mode;
   btnScrollMode.textContent = `${SCROLL_ICONS[mode]} ${mode.charAt(0).toUpperCase() + mode.slice(1)}`;
   btnScrollMode.title = `Scroll mode: ${mode} — click to cycle`;
-  speedCtrlEl.style.display = (mode === 'auto' || mode === 'voice') ? 'inline-flex' : 'none';
   appEl.dataset.scrollMode = mode;
 
   if (mode === 'auto')  { startAutoScroll(); }
