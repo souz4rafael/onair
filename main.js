@@ -44,6 +44,8 @@ const DEFAULT_CONFIG = {
     fontSize:   22,
     fontColor:  '#f0f0f0',
     scrollStep: 120,
+    scrollSpeed: 50,
+    voiceRmsThreshold: 15,
   },
   audioDeviceId: '',
 };
@@ -552,6 +554,11 @@ ipcMain.on('set-ignore-mouse', (_, ignore) => {
 // Control-bar slider changes — keep in-memory in sync (not persisted until Settings saves)
 ipcMain.on('update-appearance', (_, partial) => {
   config.appearance = { ...config.appearance, ...partial };
+});
+
+// Live preview from Settings window — applies to overlay without saving
+ipcMain.on('preview-appearance', (_, partial) => {
+  win?.webContents.send('apply-config', partial);
 });
 
 // ── IPC: settings window ──────────────────────────────────────────────────────

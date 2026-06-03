@@ -5,9 +5,6 @@ const appEl      = document.getElementById('app');
 const contentEl  = document.getElementById('content');
 const viewportEl = document.getElementById('viewport');
 const filenameEl = document.getElementById('filename');
-const slOpacity  = document.getElementById('sl-opacity');
-const slFont     = document.getElementById('sl-font');
-const pkColor    = document.getElementById('pk-color');
 const btnMove     = document.getElementById('btn-move');
 const btnOpen     = document.getElementById('btn-open');
 const btnClose    = document.getElementById('btn-close');
@@ -57,7 +54,7 @@ let voiceAudioCtx  = null;
 let voiceAnalyser  = null;
 let voiceStream    = null;
 let voiceTimerId   = null;
-const VOICE_RMS_THRESHOLD = 0.015;
+let voiceRmsThreshold = 0.015; // updated from config (settings value / 1000)
 
 // Word tracking
 let wordSpans      = [];
@@ -274,30 +271,17 @@ function applyProtectState(isProtected) {
 window.tp.onProtectState((isProtected) => applyProtectState(isProtected));
 btnProtect.addEventListener('click', () => window.tp.toggleProtect());
 
-// ── Apply config from main (on startup or after Settings save) ────────────────
+// ── Apply config from main (on startup or after Settings save/preview) ────────
 window.tp.onApplyConfig((a) => {
-  if (a.opacity    != null) { slOpacity.value = a.opacity;   document.documentElement.style.setProperty('--bg-opacity', a.opacity / 100); }
-  if (a.fontSize   != null) { slFont.value    = a.fontSize;  document.documentElement.style.setProperty('--font-size',  `${a.fontSize}px`); requestAnimationFrame(recalcMaxScroll); }
-  if (a.fontColor  != null) { pkColor.value   = a.fontColor; document.documentElement.style.setProperty('--font-color', a.fontColor); }
+  if (a.opacity   != null) document.documentElement.style.setProperty('--bg-opacity', a.opacity / 100);
+  if (a.fontSize  != null) { document.documentElement.style.setProperty('--font-size', `${a.fontSize}px`); requestAnimationFrame(recalcMaxScroll); }
+  if (a.fontColor != null) document.documentElement.style.setProperty('--font-color', a.fontColor);
   if (a.audioDeviceId != null) savedAudioDeviceId = a.audioDeviceId;
+  if (a.scrollSpeed   != null) { scrollSpeed = a.scrollSpeed; updateSpeedLabel(); }
+  if (a.voiceRmsThreshold != null) voiceRmsThreshold = a.voiceRmsThreshold / 1000;
 });
 
 // ── Controls ──────────────────────────────────────────────────────────────────
-slOpacity.addEventListener('input', () => {
-  document.documentElement.style.setProperty('--bg-opacity', slOpacity.value / 100);
-  window.tp.updateAppearance({ opacity: parseInt(slOpacity.value, 10) });
-});
-
-slFont.addEventListener('input', () => {
-  document.documentElement.style.setProperty('--font-size', `${slFont.value}px`);
-  window.tp.updateAppearance({ fontSize: parseInt(slFont.value, 10) });
-  requestAnimationFrame(recalcMaxScroll);
-});
-
-pkColor.addEventListener('input', () => {
-  document.documentElement.style.setProperty('--font-color', pkColor.value);
-  window.tp.updateAppearance({ fontColor: pkColor.value });
-});
 
 btnOpen.addEventListener('click',     () => window.tp.openFile());
 btnSettings.addEventListener('click', () => window.tp.openSettings());
@@ -383,7 +367,7 @@ async function startVoiceMonitor() {
       if (scrollMode !== 'voice') return;
       voiceAnalyser.getFloatTimeDomainData(buf);
       const rms  = Math.sqrt(buf.reduce((s, v) => s + v * v, 0) / buf.length);
-      isSpeaking = rms > VOICE_RMS_THRESHOLD;
+      isSpeaking = rms > voiceRmsThreshold;
       voiceTimerId = setTimeout(checkVolume, 50); // 20 checks/sec
     }
     checkVolume();

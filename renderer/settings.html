@@ -17,6 +17,7 @@
       <button class="tab active" data-tab="ai">🤖 AI</button>
       <button class="tab"        data-tab="audio">🎤 Audio</button>
       <button class="tab"        data-tab="appearance">🎨 Appearance</button>
+      <button class="tab"        data-tab="scroll">📜 Scroll</button>
     </nav>
 
     <!-- AI tab -->
@@ -135,7 +136,7 @@
     <section id="tab-appearance" class="tab-panel">
 
       <div class="section-header">Overlay appearance</div>
-      <p class="section-hint">These are the defaults loaded on startup. You can still tweak them live in the control bar.</p>
+      <p class="section-hint">Changes apply instantly to the overlay — Save to persist them.</p>
 
       <div class="field slider-field">
         <label>Background opacity <span class="val" id="val-opacity">75%</span></label>
@@ -162,10 +163,30 @@
         </div>
       </div>
 
+    </section>
+
+    <!-- Scroll tab -->
+    <section id="tab-scroll" class="tab-panel">
+
+      <div class="section-header">Manual scroll</div>
       <div class="field slider-field">
         <label>Scroll step <span class="val" id="val-scroll">120px</span></label>
         <input type="range" id="sl-scroll" min="40" max="400" step="10" value="120"/>
-        <p class="hint-tiny">Higher = faster scroll per keypress</p>
+        <p class="hint-tiny">Distance scrolled per keypress (Ctrl+Alt+↑/↓)</p>
+      </div>
+
+      <div class="section-header" style="margin-top:16px">Auto / Voice scroll</div>
+      <div class="field slider-field">
+        <label>Auto-scroll speed <span class="val" id="val-speed">50px/s</span></label>
+        <input type="range" id="sl-speed" min="10" max="400" step="10" value="50"/>
+        <p class="hint-tiny">Pixels per second in Auto and Voice modes. Applies instantly.</p>
+      </div>
+
+      <div class="section-header" style="margin-top:16px">Voice detection</div>
+      <div class="field slider-field">
+        <label>Mic sensitivity <span class="val" id="val-rms">15</span></label>
+        <input type="range" id="sl-rms" min="5" max="80" step="1" value="15"/>
+        <p class="hint-tiny">Lower = more sensitive (triggers on quieter sounds). Higher = only loud speech.</p>
       </div>
 
     </section>

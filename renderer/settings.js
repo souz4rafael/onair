@@ -53,28 +53,50 @@ const audioPemHint   = document.getElementById('audio-perm-hint');
 const slOpacity  = document.getElementById('sl-opacity');
 const slFont     = document.getElementById('sl-font');
 const pkColor    = document.getElementById('pk-color');
-const slScroll   = document.getElementById('sl-scroll');
 const valOpacity = document.getElementById('val-opacity');
 const valFont    = document.getElementById('val-font');
-const valScroll  = document.getElementById('val-scroll');
 const colorHex   = document.getElementById('color-hex');
+
+// ── DOM refs — Scroll ─────────────────────────────────────────────────────────
+const slScroll   = document.getElementById('sl-scroll');
+const slSpeed    = document.getElementById('sl-speed');
+const slRms      = document.getElementById('sl-rms');
+const valScroll  = document.getElementById('val-scroll');
+const valSpeed   = document.getElementById('val-speed');
+const valRms     = document.getElementById('val-rms');
 
 // ── DOM refs — Footer ─────────────────────────────────────────────────────────
 const btnSave    = document.getElementById('btn-save');
 const btnCancel  = document.getElementById('btn-cancel');
 const saveStatus = document.getElementById('save-status');
 
-// ── Slider live labels ────────────────────────────────────────────────────────
-slOpacity.addEventListener('input', () => { valOpacity.textContent = `${slOpacity.value}%`; });
-slFont.addEventListener('input',    () => { valFont.textContent    = `${slFont.value}px`; });
-slScroll.addEventListener('input',  () => { valScroll.textContent  = `${slScroll.value}px`; });
-pkColor.addEventListener('input',   () => { colorHex.textContent   = pkColor.value; syncPresetHighlight(); });
+// ── Slider live labels + live preview ────────────────────────────────────────
+slOpacity.addEventListener('input', () => {
+  valOpacity.textContent = `${slOpacity.value}%`;
+  window.tpSettings.previewAppearance({ opacity: parseInt(slOpacity.value, 10) });
+});
+slFont.addEventListener('input', () => {
+  valFont.textContent = `${slFont.value}px`;
+  window.tpSettings.previewAppearance({ fontSize: parseInt(slFont.value, 10) });
+});
+slScroll.addEventListener('input',  () => { valScroll.textContent = `${slScroll.value}px`; });
+slSpeed.addEventListener('input',   () => {
+  valSpeed.textContent = `${slSpeed.value}px/s`;
+  window.tpSettings.previewAppearance({ scrollSpeed: parseInt(slSpeed.value, 10) });
+});
+slRms.addEventListener('input',     () => { valRms.textContent = slRms.value; });
+pkColor.addEventListener('input',   () => {
+  colorHex.textContent = pkColor.value;
+  syncPresetHighlight();
+  window.tpSettings.previewAppearance({ fontColor: pkColor.value });
+});
 
 document.querySelectorAll('.preset').forEach(btn => {
   btn.addEventListener('click', () => {
     pkColor.value        = btn.dataset.color;
     colorHex.textContent = btn.dataset.color;
     syncPresetHighlight();
+    window.tpSettings.previewAppearance({ fontColor: btn.dataset.color });
   });
 });
 
@@ -123,9 +145,13 @@ function populate(cfg) {
   slFont.value           = a.fontSize   ?? 22;
   pkColor.value          = a.fontColor  || '#f0f0f0';
   slScroll.value         = a.scrollStep ?? 120;
+  slSpeed.value          = a.scrollSpeed ?? 50;
+  slRms.value            = a.voiceRmsThreshold ?? 15;
   valOpacity.textContent = `${slOpacity.value}%`;
   valFont.textContent    = `${slFont.value}px`;
   valScroll.textContent  = `${slScroll.value}px`;
+  valSpeed.textContent   = `${slSpeed.value}px/s`;
+  valRms.textContent     = slRms.value;
   colorHex.textContent   = pkColor.value;
   syncPresetHighlight();
 
@@ -153,10 +179,12 @@ function buildConfig() {
       chatModel:    groqChatMod.value.trim()    || 'llama-3.3-70b-versatile',
     },
     appearance: {
-      opacity:    parseInt(slOpacity.value, 10),
-      fontSize:   parseInt(slFont.value, 10),
-      fontColor:  pkColor.value,
-      scrollStep: parseInt(slScroll.value, 10),
+      opacity:             parseInt(slOpacity.value, 10),
+      fontSize:            parseInt(slFont.value, 10),
+      fontColor:           pkColor.value,
+      scrollStep:          parseInt(slScroll.value, 10),
+      scrollSpeed:         parseInt(slSpeed.value, 10),
+      voiceRmsThreshold:   parseInt(slRms.value, 10),
     },
     audioDeviceId: audioDeviceSel.value || '',
   };
