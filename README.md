@@ -60,15 +60,35 @@ Config is stored at `%APPDATA%\onAIr\config.json` — **never committed to the r
 
 ## Keyboard shortcuts
 
+All shortcuts are **global** — they work even when focus is on another window (Teams, Edge, PowerPoint, etc.).
+
+### Scrolling
+
 | Shortcut | Action |
 |---|---|
-| `Ctrl+Alt+PgUp` | Scroll up |
-| `Ctrl+Alt+PgDn` | Scroll down |
-| `Ctrl+Alt+Home` | Toggle Move/Resize mode |
-| `Ctrl+Alt+O` | Open script file |
-| `Ctrl+Alt+R` | Start / stop recording |
-| `Ctrl+Alt+M` | Switch Script ↔ Q&A mode |
+| `Ctrl+Alt+Page Up` | Scroll script up |
+| `Ctrl+Alt+↑` | Scroll script up (alternative) |
+| `Ctrl+Alt+Page Down` | Scroll script down |
+| `Ctrl+Alt+↓` | Scroll script down (alternative) |
+
+### AI Q&A
+
+| Shortcut | Action |
+|---|---|
+| `Ctrl+Alt+R` | Start recording client question |
+| `Ctrl+Alt+R` *(again)* | Stop recording → transcribe → get AI answer |
+| `Ctrl+Alt+M` | Switch between Script view and Q&A answer view |
+
+### App control
+
+| Shortcut | Action |
+|---|---|
+| `Ctrl+Alt+O` | Open a script file (`.txt`) |
+| `Ctrl+Alt+Home` | Toggle Move/Resize mode (drag the overlay around) |
+| `Ctrl+Alt+Insert` | Toggle Move/Resize mode (alternative) |
 | `Ctrl+Alt+,` | Open Settings |
+
+> **Tip:** Scroll step size is configurable in Settings → Appearance.
 
 ---
 
