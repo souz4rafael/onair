@@ -48,6 +48,8 @@ const DEFAULT_CONFIG = {
     voiceRmsThreshold: 15,
   },
   audioDeviceId: '',
+  systemPrompt: 'You are a helpful assistant supporting a sales or technical presentation. The presenter received a question from a client and needs a concise answer they can read aloud. Respond in the same language as the question. Keep your answer clear and under 4 sentences.',
+  presentationContext: '',
 };
 
 let config     = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
@@ -71,6 +73,8 @@ function loadConfig() {
       groq:          { ...DEFAULT_CONFIG.groq,    ...(disk.groq    || {}) },
       appearance:    { ...DEFAULT_CONFIG.appearance, ...(disk.appearance || {}) },
       audioDeviceId: disk.audioDeviceId || '',
+      systemPrompt:        disk.systemPrompt        ?? DEFAULT_CONFIG.systemPrompt,
+      presentationContext: disk.presentationContext || '',
     };
   } catch {
     config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
@@ -388,7 +392,15 @@ function transcribeWithWhisper(audioBuffer) {
 
 function getAIResponse(question) {
   const p = config.provider || 'azure';
-  const systemPrompt = 'You are a helpful assistant supporting a sales or technical presentation. The presenter received a question from a client and needs a concise answer they can read aloud. Respond in the same language as the question. Keep your answer clear and under 4 sentences.';
+  const systemPrompt = config.systemPrompt ||
+    'You are a helpful assistant supporting a sales or technical presentation. The presenter received a question from a client and needs a concise answer they can read aloud. Respond in the same language as the question. Keep your answer clear and under 4 sentences.';
+
+  // Build messages array — inject presentation context as a second system message if provided
+  const messages = [{ role: 'system', content: systemPrompt }];
+  if (config.presentationContext?.trim()) {
+    messages.push({ role: 'system', content: `Presentation context:\n${config.presentationContext.trim()}` });
+  }
+  messages.push({ role: 'user', content: question });
 
   let hostname, reqPath, authHeader, bodyObj;
   try {
@@ -398,15 +410,15 @@ function getAIResponse(question) {
         return Promise.resolve({ ok: false, error: 'Azure: endpoint, key and Chat Deployment are required.' });
       const url = new URL(`${endpoint.replace(/\/$/, '')}/openai/deployments/${encodeURIComponent(chatDeployment)}/chat/completions?api-version=2024-05-01-preview`);
       hostname = url.hostname; reqPath = url.pathname + url.search;
-      authHeader = null; // uses api-key header
-      bodyObj = { messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: question }], max_tokens: 400, temperature: 0.7 };
+      authHeader = null;
+      bodyObj = { messages, max_tokens: 400, temperature: 0.7 };
     } else {
       const cfg = p === 'groq' ? config.groq : config.openai;
       if (!cfg.key) return Promise.resolve({ ok: false, error: `${p}: API key is required.` });
       hostname   = p === 'groq' ? 'api.groq.com' : 'api.openai.com';
       reqPath    = '/openai/v1/chat/completions';
       authHeader = `Bearer ${cfg.key}`;
-      bodyObj = { model: cfg.chatModel, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: question }], max_tokens: 400, temperature: 0.7 };
+      bodyObj = { model: cfg.chatModel, messages, max_tokens: 400, temperature: 0.7 };
     }
   } catch (e) {
     return Promise.resolve({ ok: false, error: 'Config error: ' + e.message });

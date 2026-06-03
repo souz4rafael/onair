@@ -31,7 +31,6 @@
           <option value="groq">Groq</option>
         </select>
       </div>
-
       <!-- Azure section -->
       <div id="section-azure" class="provider-section">
         <div class="section-header">Azure OpenAI credentials</div>
@@ -109,6 +108,25 @@
           <button class="btn-test" id="test-groq">Test Connection</button>
           <span class="test-result" id="res-groq"></span>
         </div>
+      </div>
+
+      <!-- Q&A prompt customisation -->
+      <div class="section-header" style="margin-top:18px">Q&amp;A Response</div>
+      <p class="section-hint">Customise how the AI answers client questions during your presentation.</p>
+
+      <div class="field">
+        <label for="system-prompt">
+          System prompt
+          <button class="btn-reset-prompt" id="btn-reset-prompt" title="Restore default prompt">↩ Reset</button>
+        </label>
+        <textarea id="system-prompt" rows="5" placeholder="Instructions for the AI…" spellcheck="false"></textarea>
+        <p class="hint-tiny">Controls the AI's behaviour and answer style. Use {language} to match the client's language automatically.</p>
+      </div>
+
+      <div class="field">
+        <label for="presentation-context">Presentation context <span class="ex">optional</span></label>
+        <textarea id="presentation-context" rows="3" placeholder="Brief description of your presentation: product, audience, objectives…" spellcheck="false"></textarea>
+        <p class="hint-tiny">Injected before the client's question so the AI gives more relevant answers.</p>
       </div>
 
     </section>

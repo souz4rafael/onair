@@ -44,6 +44,10 @@ const oaiChatMod    = document.getElementById('oai-chat-model');
 const groqKey       = document.getElementById('groq-key');
 const groqWhisperMod = document.getElementById('groq-whisper-model');
 const groqChatMod   = document.getElementById('groq-chat-model');
+// Q&A prompt
+const systemPromptEl       = document.getElementById('system-prompt');
+const presentationCtxEl    = document.getElementById('presentation-context');
+const btnResetPrompt       = document.getElementById('btn-reset-prompt');
 
 // ── DOM refs — Audio ──────────────────────────────────────────────────────────
 const audioDeviceSel = document.getElementById('audio-device');
@@ -106,6 +110,13 @@ function syncPresetHighlight() {
   );
 }
 
+// ── Reset prompt ──────────────────────────────────────────────────────────────
+const DEFAULT_SYSTEM_PROMPT = 'You are a helpful assistant supporting a sales or technical presentation. The presenter received a question from a client and needs a concise answer they can read aloud. Respond in the same language as the question. Keep your answer clear and under 4 sentences.';
+
+btnResetPrompt.addEventListener('click', () => {
+  systemPromptEl.value = DEFAULT_SYSTEM_PROMPT;
+});
+
 // ── Load / populate / build config ───────────────────────────────────────────
 let originalConfig = null;
 
@@ -138,6 +149,10 @@ function populate(cfg) {
   groqKey.value        = groq.key          || '';
   groqWhisperMod.value = groq.whisperModel || 'whisper-large-v3';
   groqChatMod.value    = groq.chatModel    || 'llama-3.3-70b-versatile';
+
+  // Q&A prompt
+  systemPromptEl.value    = cfg.systemPrompt       || '';
+  presentationCtxEl.value = cfg.presentationContext || '';
 
   // Appearance
   const a = cfg.appearance || {};
@@ -187,6 +202,8 @@ function buildConfig() {
       voiceRmsThreshold:   parseInt(slRms.value, 10),
     },
     audioDeviceId: audioDeviceSel.value || '',
+    systemPrompt:         systemPromptEl.value.trim(),
+    presentationContext:  presentationCtxEl.value.trim(),
   };
 }
 
