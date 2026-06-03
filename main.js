@@ -1,5 +1,6 @@
 'use strict';
 const { app, BrowserWindow, globalShortcut, ipcMain, dialog, Tray, Menu } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const path  = require('path');
 const fs    = require('fs');
 const https = require('https');
@@ -235,12 +236,14 @@ function createTray() {
   const menu = Menu.buildFromTemplate([
     { label: 'onAIr', enabled: false },
     { type: 'separator' },
-    { label: 'Load Script…',  click: () => openFilePicker() },
-    { label: 'Settings…',     click: () => createSettingsWindow() },
+    { label: 'Load Script…',      click: () => openFilePicker() },
+    { label: 'Settings…',         click: () => createSettingsWindow() },
     { type: 'separator' },
-    { label: 'Toggle Move Mode', click: () => toggleMoveMode() },
+    { label: 'Toggle Move Mode',  click: () => toggleMoveMode() },
     { type: 'separator' },
-    { label: 'Quit',          click: () => app.quit() },
+    { label: 'Check for Updates…', click: () => checkForUpdates(false) },
+    { type: 'separator' },
+    { label: 'Quit',              click: () => app.quit() },
   ]);
   tray.setContextMenu(menu);
   tray.on('double-click', () => win?.show());
@@ -432,7 +435,70 @@ function getAIResponse(question) {
   });
 }
 
-// ── App lifecycle ─────────────────────────────────────────────────────────────
+// ── Auto-updater ──────────────────────────────────────────────────────────────
+
+function setupAutoUpdater() {
+  // Silent in dev mode (running from source, not installed)
+  if (!app.isPackaged) return;
+
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  // Private repo needs a GitHub token. Accept from env var (set by installer
+  // or by the user in their system environment variables).
+  const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || '';
+  if (token) autoUpdater.setFeedURL({ provider: 'github', owner: 'rafasouza_microsoft', repo: 'onair', private: true, token });
+
+  autoUpdater.on('update-available', (info) => {
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Update Available',
+      message: `onAIr ${info.version} is available`,
+      detail: `You are running ${app.getVersion()}.\n\nDo you want to download and install the update now?`,
+      buttons: ['Download & Install', 'Later'],
+      defaultId: 0,
+      cancelId: 1,
+    }).then(({ response }) => {
+      if (response === 0) autoUpdater.downloadUpdate();
+    });
+  });
+
+  autoUpdater.on('update-downloaded', () => {
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Update Ready',
+      message: 'Update downloaded',
+      detail: 'The update will be installed when you quit onAIr. Restart now?',
+      buttons: ['Restart Now', 'Later'],
+      defaultId: 0,
+      cancelId: 1,
+    }).then(({ response }) => {
+      if (response === 0) autoUpdater.quitAndInstall();
+    });
+  });
+
+  autoUpdater.on('error', (err) => {
+    // Log silently — don't bother user with update errors
+    console.error('[updater]', err.message);
+  });
+}
+
+function checkForUpdates(silent = false) {
+  if (!app.isPackaged) {
+    if (!silent) dialog.showMessageBox({ type: 'info', title: 'Dev Mode', message: 'Auto-update not available in development mode.\n\nRun the installed app to check for updates.' });
+    return;
+  }
+  if (!silent) {
+    autoUpdater.once('update-not-available', () => {
+      dialog.showMessageBox({ type: 'info', title: 'Up to date', message: `onAIr ${app.getVersion()} is the latest version.` });
+    });
+  }
+  autoUpdater.checkForUpdates().catch(err => {
+    if (!silent) dialog.showMessageBox({ type: 'warning', title: 'Update Check Failed', message: err.message + '\n\nMake sure GH_TOKEN is set in your environment variables, or check for updates manually at github.com/rafasouza_microsoft/onair/releases' });
+  });
+}
+
+
 
 app.on('second-instance', (_, argv) => {
   const file = findTxtArg(argv);
@@ -444,6 +510,9 @@ app.whenReady().then(() => {
   createWindow();
   registerHotkeys();
   createTray();
+  setupAutoUpdater();
+  // Check for updates 10s after launch — quiet, only prompts if update found
+  setTimeout(() => checkForUpdates(true), 10_000);
 });
 
 app.on('will-quit', () => globalShortcut.unregisterAll());
