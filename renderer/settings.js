@@ -20,40 +20,49 @@ document.querySelectorAll('.eye-btn').forEach(btn => {
 });
 
 // ── Provider selector ─────────────────────────────────────────────────────────
-const providerSel = document.getElementById('ai-provider');
+const WHISPER_PROVIDERS = ['azure', 'openai', 'groq'];
+const ALL_PROVIDERS     = ['azure', 'openai', 'groq', 'anthropic', 'gemini', 'mistral'];
+const providerSel       = document.getElementById('ai-provider');
+const transcriptionSel  = document.getElementById('transcription-provider');
+const sectionTranscription = document.getElementById('section-transcription');
 
 function showProviderSection(p) {
-  ['azure', 'openai', 'groq'].forEach(id => {
+  ALL_PROVIDERS.forEach(id => {
     document.getElementById(`section-${id}`).style.display = id === p ? '' : 'none';
   });
+  // Show transcription override only for providers without Whisper
+  const needsWhisperOverride = !WHISPER_PROVIDERS.includes(p);
+  sectionTranscription.style.display = needsWhisperOverride ? '' : 'none';
 }
 
 providerSel.addEventListener('change', () => showProviderSection(providerSel.value));
 
 // ── DOM refs — AI ─────────────────────────────────────────────────────────────
-// Azure
-const azEndpoint    = document.getElementById('az-endpoint');
-const azKey         = document.getElementById('az-key');
-const azWhisper     = document.getElementById('az-whisper');
-const azChat        = document.getElementById('az-chat');
-// OpenAI
-const oaiKey        = document.getElementById('oai-key');
-const oaiWhisperMod = document.getElementById('oai-whisper-model');
-const oaiChatMod    = document.getElementById('oai-chat-model');
-// Groq
-const groqKey       = document.getElementById('groq-key');
+const azEndpoint     = document.getElementById('az-endpoint');
+const azKey          = document.getElementById('az-key');
+const azWhisper      = document.getElementById('az-whisper');
+const azChat         = document.getElementById('az-chat');
+const oaiKey         = document.getElementById('oai-key');
+const oaiWhisperMod  = document.getElementById('oai-whisper-model');
+const oaiChatMod     = document.getElementById('oai-chat-model');
+const groqKey        = document.getElementById('groq-key');
 const groqWhisperMod = document.getElementById('groq-whisper-model');
-const groqChatMod   = document.getElementById('groq-chat-model');
-// Q&A prompt
-const systemPromptEl       = document.getElementById('system-prompt');
-const presentationCtxEl    = document.getElementById('presentation-context');
-const btnResetPrompt       = document.getElementById('btn-reset-prompt');
+const groqChatMod    = document.getElementById('groq-chat-model');
+const anthropicKey   = document.getElementById('anthropic-key');
+const anthropicModel = document.getElementById('anthropic-chat-model');
+const geminiKey      = document.getElementById('gemini-key');
+const geminiModel    = document.getElementById('gemini-chat-model');
+const mistralKey     = document.getElementById('mistral-key');
+const mistralModel   = document.getElementById('mistral-chat-model');
+const systemPromptEl      = document.getElementById('system-prompt');
+const presentationCtxEl   = document.getElementById('presentation-context');
+const btnResetPrompt      = document.getElementById('btn-reset-prompt');
 
 // ── DOM refs — Audio ──────────────────────────────────────────────────────────
-const audioDeviceSel    = document.getElementById('audio-device');
-const audioOutputSel    = document.getElementById('audio-output-device');
-const audioPemHint      = document.getElementById('audio-perm-hint');
-const recSourceInputs   = document.querySelectorAll('input[name="rec-source"]');
+const audioDeviceSel  = document.getElementById('audio-device');
+const audioOutputSel  = document.getElementById('audio-output-device');
+const audioPemHint    = document.getElementById('audio-perm-hint');
+const recSourceInputs = document.querySelectorAll('input[name="rec-source"]');
 
 // ── DOM refs — Appearance ─────────────────────────────────────────────────────
 const slOpacity  = document.getElementById('sl-opacity');
@@ -75,6 +84,24 @@ const valRms     = document.getElementById('val-rms');
 const btnSave    = document.getElementById('btn-save');
 const btnCancel  = document.getElementById('btn-cancel');
 const saveStatus = document.getElementById('save-status');
+
+// ── Protect toggle (Scroll tab) ───────────────────────────────────────────────
+const btnProtectCtrl = document.getElementById('btn-protect-ctrl');
+
+function updateProtectButton(isProtected) {
+  btnProtectCtrl.textContent = isProtected ? '🙈 Hidden' : '👁 Visible';
+  btnProtectCtrl.title       = isProtected
+    ? 'Click to make overlay visible to screen-share'
+    : 'Click to hide overlay from screen-share';
+  btnProtectCtrl.classList.toggle('protect-visible', !isProtected);
+}
+
+btnProtectCtrl.addEventListener('click', async () => {
+  const result = await window.tpSettings.toggleProtect();
+  if (result !== undefined) updateProtectButton(result);
+});
+
+window.tpSettings.onProtectState(state => updateProtectButton(state));
 
 // ── Virtual scroll controls ───────────────────────────────────────────────────
 document.getElementById('btn-vscroll-up').addEventListener('click', () => {
@@ -109,13 +136,13 @@ slFont.addEventListener('input', () => {
   valFont.textContent = `${slFont.value}px`;
   window.tpSettings.previewAppearance({ fontSize: parseInt(slFont.value, 10) });
 });
-slScroll.addEventListener('input',  () => { valScroll.textContent = `${slScroll.value}px`; });
-slSpeed.addEventListener('input',   () => {
+slScroll.addEventListener('input', () => { valScroll.textContent = `${slScroll.value}px`; });
+slSpeed.addEventListener('input',  () => {
   valSpeed.textContent = `${slSpeed.value}px/s`;
   window.tpSettings.previewAppearance({ scrollSpeed: parseInt(slSpeed.value, 10) });
 });
-slRms.addEventListener('input',     () => { valRms.textContent = slRms.value; });
-pkColor.addEventListener('input',   () => {
+slRms.addEventListener('input',    () => { valRms.textContent = slRms.value; });
+pkColor.addEventListener('input',  () => {
   colorHex.textContent = pkColor.value;
   syncPresetHighlight();
   window.tpSettings.previewAppearance({ fontColor: pkColor.value });
@@ -143,19 +170,47 @@ btnResetPrompt.addEventListener('click', () => {
   systemPromptEl.value = DEFAULT_SYSTEM_PROMPT;
 });
 
+// ── Browser tab ───────────────────────────────────────────────────────────────
+const browserUrlInput = document.getElementById('browser-url');
+const btnLoadUrl      = document.getElementById('btn-load-url');
+
+function loadBrowserUrl() {
+  let url = browserUrlInput.value.trim();
+  if (!url) return;
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  window.tpSettings.loadBrowserUrl(url);
+}
+
+btnLoadUrl.addEventListener('click', loadBrowserUrl);
+browserUrlInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') loadBrowserUrl();
+});
+
+document.querySelectorAll('.quick-url-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    browserUrlInput.value = btn.dataset.url;
+    loadBrowserUrl();
+  });
+});
+
 // ── Load / populate / build config ───────────────────────────────────────────
 let originalConfig = null;
 
 async function loadConfig() {
   const cfg = await window.tpSettings.getConfig();
   originalConfig = JSON.parse(JSON.stringify(cfg));
-  populate(cfg);
+  // Initialise protect button state from config meta-field
+  if (cfg.__protected !== undefined) updateProtectButton(cfg.__protected);
+  await populate(cfg);
 }
 
 async function populate(cfg) {
   // Provider
   providerSel.value = cfg.provider || 'azure';
   showProviderSection(providerSel.value);
+
+  // Transcription override
+  transcriptionSel.value = cfg.transcriptionProvider || 'openai';
 
   // Azure
   const az = cfg.azure || {};
@@ -175,6 +230,21 @@ async function populate(cfg) {
   groqKey.value        = groq.key          || '';
   groqWhisperMod.value = groq.whisperModel || 'whisper-large-v3';
   groqChatMod.value    = groq.chatModel    || 'llama-3.3-70b-versatile';
+
+  // Anthropic
+  const anth = cfg.anthropic || {};
+  anthropicKey.value   = anth.key       || '';
+  anthropicModel.value = anth.chatModel || 'claude-3-5-haiku-20241022';
+
+  // Gemini
+  const gem = cfg.gemini || {};
+  geminiKey.value   = gem.key       || '';
+  geminiModel.value = gem.chatModel || 'gemini-2.0-flash';
+
+  // Mistral
+  const mist = cfg.mistral || {};
+  mistralKey.value   = mist.key       || '';
+  mistralModel.value = mist.chatModel || 'mistral-small-latest';
 
   // Q&A prompt
   systemPromptEl.value    = cfg.systemPrompt       || '';
@@ -196,7 +266,6 @@ async function populate(cfg) {
   colorHex.textContent   = pkColor.value;
   syncPresetHighlight();
 
-  // Initialise scroll settings visibility (default mode is manual)
   updateScrollSettings('manual');
 
   // Audio
@@ -208,7 +277,8 @@ async function populate(cfg) {
 
 function buildConfig() {
   return {
-    provider: providerSel.value,
+    provider:              providerSel.value,
+    transcriptionProvider: transcriptionSel.value,
     azure: {
       endpoint:          azEndpoint.value.trim(),
       key:               azKey.value.trim(),
@@ -225,16 +295,28 @@ function buildConfig() {
       whisperModel: groqWhisperMod.value.trim() || 'whisper-large-v3',
       chatModel:    groqChatMod.value.trim()    || 'llama-3.3-70b-versatile',
     },
-    appearance: {
-      opacity:             parseInt(slOpacity.value, 10),
-      fontSize:            parseInt(slFont.value, 10),
-      fontColor:           pkColor.value,
-      scrollStep:          parseInt(slScroll.value, 10),
-      scrollSpeed:         parseInt(slSpeed.value, 10),
-      voiceRmsThreshold:   parseInt(slRms.value, 10),
+    anthropic: {
+      key:       anthropicKey.value.trim(),
+      chatModel: anthropicModel.value,
     },
-    audioDeviceId:       audioDeviceSel.value || '',
-    audioOutputDeviceId: audioOutputSel.value || '',
+    gemini: {
+      key:       geminiKey.value.trim(),
+      chatModel: geminiModel.value,
+    },
+    mistral: {
+      key:       mistralKey.value.trim(),
+      chatModel: mistralModel.value,
+    },
+    appearance: {
+      opacity:           parseInt(slOpacity.value, 10),
+      fontSize:          parseInt(slFont.value, 10),
+      fontColor:         pkColor.value,
+      scrollStep:        parseInt(slScroll.value, 10),
+      scrollSpeed:       parseInt(slSpeed.value, 10),
+      voiceRmsThreshold: parseInt(slRms.value, 10),
+    },
+    audioDeviceId:        audioDeviceSel.value || '',
+    audioOutputDeviceId:  audioOutputSel.value || '',
     audioRecordingSource: [...recSourceInputs].find(r => r.checked)?.value || 'microphone',
     systemPrompt:         systemPromptEl.value.trim(),
     presentationContext:  presentationCtxEl.value.trim(),
@@ -270,6 +352,18 @@ document.getElementById('test-groq').addEventListener('click', () =>
   runTest(document.getElementById('test-groq'), document.getElementById('res-groq'),
     'groq', { key: groqKey.value.trim() })
 );
+document.getElementById('test-anthropic').addEventListener('click', () =>
+  runTest(document.getElementById('test-anthropic'), document.getElementById('res-anthropic'),
+    'anthropic', { key: anthropicKey.value.trim() })
+);
+document.getElementById('test-gemini').addEventListener('click', () =>
+  runTest(document.getElementById('test-gemini'), document.getElementById('res-gemini'),
+    'gemini', { key: geminiKey.value.trim() })
+);
+document.getElementById('test-mistral').addEventListener('click', () =>
+  runTest(document.getElementById('test-mistral'), document.getElementById('res-mistral'),
+    'mistral', { key: mistralKey.value.trim() })
+);
 
 // ── Audio device enumeration ───────────────────────────────────────────────────
 async function populateAudioDevices(savedId = '') {
@@ -295,8 +389,8 @@ async function populateAudioDevices(savedId = '') {
 }
 
 async function populateOutputDevices(savedId = '') {
-  const devices  = await navigator.mediaDevices.enumerateDevices();
-  const outputs  = devices.filter(d => d.kind === 'audiooutput');
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  const outputs = devices.filter(d => d.kind === 'audiooutput');
   audioOutputSel.innerHTML = '<option value="">System default</option>';
   for (const d of outputs) {
     const opt       = document.createElement('option');
@@ -312,10 +406,11 @@ async function populateOutputDevices(savedId = '') {
 document.getElementById('btn-refresh-audio').addEventListener('click', () =>
   populateAudioDevices(audioDeviceSel.value)
 );
-
-document.getElementById('btn-refresh-output').addEventListener('click', () =>
-  populateOutputDevices(audioOutputSel.value)
-);
+// btn-refresh-output may not exist (section hidden), guard it
+const btnRefreshOutput = document.getElementById('btn-refresh-output');
+if (btnRefreshOutput) {
+  btnRefreshOutput.addEventListener('click', () => populateOutputDevices(audioOutputSel.value));
+}
 
 // ── Save / Cancel ─────────────────────────────────────────────────────────────
 btnSave.addEventListener('click', async () => {

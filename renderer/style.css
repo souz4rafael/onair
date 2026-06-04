@@ -320,6 +320,24 @@ kbd, code {
 }
 
 /* ── Progress bar ───────────────────────────────────────── */
+/* ── Browser Panel ──────────────────────────────────────────────────────────── */
+#browser-panel {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+#app.browser-mode #browser-panel { display: flex; flex-direction: column; }
+#app.browser-mode #content       { display: none; }
+#app.browser-mode #qa-panel      { display: none; }
+
+#browser-view {
+  flex: 1;
+  width: 100%;
+  border: none;
+}
+
 /* ── Q&A Panel ──────────────────────────────────────────────────────────────── */
 #qa-panel {
   display: none;

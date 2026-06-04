@@ -8,4 +8,7 @@ contextBridge.exposeInMainWorld('tpSettings', {
   previewAppearance: (partial) => ipcRenderer.send('preview-appearance', partial),
   scrollBy:          (delta)   => ipcRenderer.send('scroll-by', delta),
   setScrollMode:     (mode)    => ipcRenderer.send('set-scroll-mode', mode),
+  toggleProtect:     ()        => ipcRenderer.invoke('toggle-protect'),
+  onProtectState:    (cb)      => ipcRenderer.on('protect-state', (_, s) => cb(s)),
+  loadBrowserUrl:    (url)     => ipcRenderer.send('load-browser-url', url),
 });

@@ -24,13 +24,17 @@ const qaQuestion  = document.getElementById('qa-question');
 const qaAnswer    = document.getElementById('qa-answer');
 const recLabel    = document.getElementById('rec-label');
 
+// Browser DOM refs
+const browserPanel = document.getElementById('browser-panel');
+const browserView  = document.getElementById('browser-view');
+
 // ── State ─────────────────────────────────────────────────────────────────────
 let scrollY      = 0;
 let maxScroll    = 0;
 let uiVisible    = false;
 let moveMode     = false;
 let isRecording  = false;
-let currentMode  = 'script'; // 'script' | 'qa'
+let currentMode  = 'script'; // 'script' | 'qa' | 'browser'
 let mediaRecorder = null;
 let audioChunks   = [];
 let savedAudioDeviceId    = ''; // set via apply-config when settings are saved
@@ -154,11 +158,18 @@ document.querySelectorAll('.mode-tab').forEach(btn => {
 
 function setMode(mode) {
   currentMode = mode;
-  appEl.classList.toggle('qa-mode', mode === 'qa');
+  appEl.classList.toggle('qa-mode',      mode === 'qa');
+  appEl.classList.toggle('browser-mode', mode === 'browser');
   document.querySelectorAll('.mode-tab').forEach(t =>
     t.classList.toggle('active', t.dataset.mode === mode)
   );
 }
+
+// ── Browser URL from Controller ───────────────────────────────────────────────
+window.tp.onLoadBrowserUrl((url) => {
+  if (browserView) browserView.src = url;
+  setMode('browser');
+});
 
 // ── Recording (MediaRecorder → Whisper → GPT) ─────────────────────────────────
 // Press R to start, press R again to stop → audio sent to Whisper → GPT answers.

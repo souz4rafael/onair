@@ -22,7 +22,8 @@ let protected_     = true;  // content protection on by default
 // ── Config ────────────────────────────────────────────────────────────────────
 
 const DEFAULT_CONFIG = {
-  provider: 'azure', // 'azure' | 'openai' | 'groq'
+  provider: 'azure', // 'azure' | 'openai' | 'groq' | 'anthropic' | 'gemini' | 'mistral'
+  transcriptionProvider: 'openai', // used when main provider lacks Whisper
   azure: {
     endpoint:          '',
     key:               '',
@@ -38,6 +39,18 @@ const DEFAULT_CONFIG = {
     key:          '',
     whisperModel: 'whisper-large-v3',
     chatModel:    'llama-3.3-70b-versatile',
+  },
+  anthropic: {
+    key:       '',
+    chatModel: 'claude-3-5-haiku-20241022',
+  },
+  gemini: {
+    key:       '',
+    chatModel: 'gemini-2.0-flash',
+  },
+  mistral: {
+    key:       '',
+    chatModel: 'mistral-small-latest',
   },
   appearance: {
     opacity:    75,
@@ -69,10 +82,14 @@ function loadConfig() {
           whisperDeployment: legacyOAI?.whisperDeployment || '',
           chatDeployment: legacyOAI?.deployment || '' };
     config = {
-      provider:      disk.provider      || DEFAULT_CONFIG.provider,
-      azure:         { ...DEFAULT_CONFIG.azure,   ...diskAzure },
-      openai:        { ...DEFAULT_CONFIG.openai,  ...(disk.openai  || {}) },
-      groq:          { ...DEFAULT_CONFIG.groq,    ...(disk.groq    || {}) },
+      provider:              disk.provider      || DEFAULT_CONFIG.provider,
+      transcriptionProvider: disk.transcriptionProvider || DEFAULT_CONFIG.transcriptionProvider,
+      azure:         { ...DEFAULT_CONFIG.azure,      ...diskAzure },
+      openai:        { ...DEFAULT_CONFIG.openai,     ...(disk.openai     || {}) },
+      groq:          { ...DEFAULT_CONFIG.groq,       ...(disk.groq       || {}) },
+      anthropic:     { ...DEFAULT_CONFIG.anthropic,  ...(disk.anthropic  || {}) },
+      gemini:        { ...DEFAULT_CONFIG.gemini,     ...(disk.gemini     || {}) },
+      mistral:       { ...DEFAULT_CONFIG.mistral,    ...(disk.mistral    || {}) },
       appearance:    { ...DEFAULT_CONFIG.appearance, ...(disk.appearance || {}) },
       audioDeviceId:        disk.audioDeviceId        || '',
       audioOutputDeviceId:  disk.audioOutputDeviceId  || '',
@@ -115,9 +132,21 @@ function testProviderConnection(provider, cfg) {
         const url = new URL(`${cfg.endpoint.replace(/\/$/, '')}/openai/deployments?api-version=2024-02-01`);
         hostname = url.hostname; path_ = url.pathname + url.search;
         headers  = { 'api-key': cfg.key };
+      } else if (provider === 'anthropic') {
+        if (!cfg.key) return resolve({ ok: false, error: 'API key is required.' });
+        hostname = 'api.anthropic.com';
+        path_    = '/v1/models';
+        headers  = { 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01' };
+      } else if (provider === 'gemini') {
+        if (!cfg.key) return resolve({ ok: false, error: 'API key is required.' });
+        hostname = 'generativelanguage.googleapis.com';
+        path_    = '/v1beta/openai/models';
+        headers  = { 'Authorization': `Bearer ${cfg.key}` };
       } else {
         if (!cfg.key) return resolve({ ok: false, error: 'API key is required.' });
-        hostname = provider === 'groq' ? 'api.groq.com' : 'api.openai.com';
+        hostname = provider === 'groq' ? 'api.groq.com'
+                 : provider === 'mistral' ? 'api.mistral.ai'
+                 : 'api.openai.com';
         path_    = '/openai/v1/models';
         headers  = { 'Authorization': `Bearer ${cfg.key}` };
       }
@@ -186,6 +215,7 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       backgroundThrottling: false,
+      webviewTag: true,
     },
   });
 
@@ -270,11 +300,11 @@ function registerHotkeys() {
   const logLines = [];
 
   const toRegister = [
-    { keys: ['CommandOrControl+Alt+PageUp',   'CommandOrControl+Alt+Up'],
+    { keys: ['CommandOrControl+Alt+PageUp'],
       label: 'scroll-up',
       handler: () => win?.webContents.send('scroll', -config.appearance.scrollStep) },
 
-    { keys: ['CommandOrControl+Alt+PageDown', 'CommandOrControl+Alt+Down'],
+    { keys: ['CommandOrControl+Alt+PageDown'],
       label: 'scroll-down',
       handler: () => win?.webContents.send('scroll', config.appearance.scrollStep) },
 
@@ -326,8 +356,16 @@ function registerHotkeys() {
 
 // ── Whisper transcription (provider-aware) ────────────────────────────────────
 
+// Providers that natively support Whisper via OpenAI-compatible transcription endpoint
+const WHISPER_CAPABLE = ['azure', 'openai', 'groq'];
+
+function getTranscriptionProvider() {
+  const main = config.provider || 'azure';
+  return WHISPER_CAPABLE.includes(main) ? main : (config.transcriptionProvider || 'openai');
+}
+
 function transcribeWithWhisper(audioBuffer) {
-  const p = config.provider || 'azure';
+  const p = getTranscriptionProvider();
 
   // Build multipart body — Azure doesn't need a model field; others do.
   const boundary = '----OnAIrWhisper' + Date.now().toString(36);
@@ -404,13 +442,56 @@ function getAIResponse(question) {
   const systemPrompt = config.systemPrompt ||
     'You are a helpful assistant supporting a sales or technical presentation. The presenter received a question from a client and needs a concise answer they can read aloud. Respond in the same language as the question. Keep your answer clear and under 4 sentences.';
 
-  // Build messages array — inject presentation context as a second system message if provided
+  const contextSuffix = config.presentationContext?.trim()
+    ? `\n\nPresentation context:\n${config.presentationContext.trim()}` : '';
+
+  // OpenAI-compatible messages array (used by azure / openai / groq / gemini / mistral)
   const messages = [{ role: 'system', content: systemPrompt }];
   if (config.presentationContext?.trim()) {
     messages.push({ role: 'system', content: `Presentation context:\n${config.presentationContext.trim()}` });
   }
   messages.push({ role: 'user', content: question });
 
+  // ── Anthropic — different API format ────────────────────────────────────────
+  if (p === 'anthropic') {
+    const { key, chatModel } = config.anthropic || {};
+    if (!key) return Promise.resolve({ ok: false, error: 'Anthropic: API key is required.' });
+    const bodyStr = JSON.stringify({
+      model:      chatModel || 'claude-3-5-haiku-20241022',
+      max_tokens: 400,
+      system:     systemPrompt + contextSuffix,
+      messages:   [{ role: 'user', content: question }],
+    });
+    return new Promise((resolve) => {
+      const headers = {
+        'Content-Type':      'application/json',
+        'Content-Length':    Buffer.byteLength(bodyStr),
+        'x-api-key':         key,
+        'anthropic-version': '2023-06-01',
+      };
+      const req = https.request(
+        { hostname: 'api.anthropic.com', path: '/v1/messages', method: 'POST', headers },
+        (res) => {
+          let data = '';
+          res.on('data', c => data += c);
+          res.on('end', () => {
+            try {
+              const json = JSON.parse(data);
+              const text = json.content?.[0]?.text?.trim();
+              if (text) resolve({ ok: true, text });
+              else resolve({ ok: false, error: json.error?.message || `HTTP ${res.statusCode}: no content` });
+            } catch (e) { resolve({ ok: false, error: 'Parse error: ' + e.message }); }
+          });
+        }
+      );
+      req.on('error', e => resolve({ ok: false, error: 'Network: ' + e.message }));
+      req.setTimeout(30000, () => { req.destroy(); resolve({ ok: false, error: 'Timeout (30s)' }); });
+      req.write(bodyStr);
+      req.end();
+    });
+  }
+
+  // ── All other providers: OpenAI-compatible /chat/completions ─────────────────
   let hostname, reqPath, authHeader, bodyObj;
   try {
     if (p === 'azure') {
@@ -421,7 +502,22 @@ function getAIResponse(question) {
       hostname = url.hostname; reqPath = url.pathname + url.search;
       authHeader = null;
       bodyObj = { messages, max_tokens: 400, temperature: 0.7 };
+    } else if (p === 'gemini') {
+      const { key, chatModel } = config.gemini || {};
+      if (!key) return Promise.resolve({ ok: false, error: 'Gemini: API key is required.' });
+      hostname   = 'generativelanguage.googleapis.com';
+      reqPath    = '/v1beta/openai/chat/completions';
+      authHeader = `Bearer ${key}`;
+      bodyObj    = { model: chatModel || 'gemini-2.0-flash', messages, max_tokens: 400, temperature: 0.7 };
+    } else if (p === 'mistral') {
+      const { key, chatModel } = config.mistral || {};
+      if (!key) return Promise.resolve({ ok: false, error: 'Mistral: API key is required.' });
+      hostname   = 'api.mistral.ai';
+      reqPath    = '/v1/chat/completions';
+      authHeader = `Bearer ${key}`;
+      bodyObj    = { model: chatModel || 'mistral-small-latest', messages, max_tokens: 400, temperature: 0.7 };
     } else {
+      // openai or groq
       const cfg = p === 'groq' ? config.groq : config.openai;
       if (!cfg.key) return Promise.resolve({ ok: false, error: `${p}: API key is required.` });
       hostname   = p === 'groq' ? 'api.groq.com' : 'api.openai.com';
@@ -559,6 +655,8 @@ ipcMain.handle('toggle-protect', () => {
   protected_ = !protected_;
   win?.setContentProtection(protected_);
   win?.webContents.send('protect-state', protected_);
+  settingsWin?.webContents.send('protect-state', protected_);
+  return protected_;
 });
 
 ipcMain.handle('open-file',        () => openFilePicker());
@@ -582,13 +680,14 @@ ipcMain.on('preview-appearance', (_, partial) => {
   win?.webContents.send('apply-config', partial);
 });
 
-// Controller → overlay: virtual scroll and mode change
-ipcMain.on('scroll-by',       (_, delta) => { win?.webContents.send('scroll-by',       delta); });
-ipcMain.on('set-scroll-mode', (_, mode)  => { win?.webContents.send('set-scroll-mode',  mode);  });
+// Controller → overlay: virtual scroll, mode change, and browser URL
+ipcMain.on('scroll-by',        (_, delta) => { win?.webContents.send('scroll-by',       delta); });
+ipcMain.on('set-scroll-mode',  (_, mode)  => { win?.webContents.send('set-scroll-mode',  mode);  });
+ipcMain.on('load-browser-url', (_, url)   => { win?.webContents.send('load-browser-url', url);   });
 
 // ── IPC: settings window ──────────────────────────────────────────────────────
 
-ipcMain.handle('get-config',  () => config);
+ipcMain.handle('get-config',  () => ({ ...config, __protected: protected_ }));
 
 ipcMain.handle('save-config', (_, newConfig) => {
   config = newConfig;

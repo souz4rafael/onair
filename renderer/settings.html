@@ -12,29 +12,211 @@
       <h1>onAIr Controller</h1>
     </header>
 
-    <!-- Tabs — Scroll is default for Controller use -->
+    <!-- Tabs: Scroll (default) | Appearance | Audio | AI | Browser | Shortcuts -->
     <nav id="tabs">
-      <button class="tab active" data-tab="scroll">📜 Scroll</button>
-      <button class="tab"        data-tab="ai">🤖 AI</button>
-      <button class="tab"        data-tab="audio">🎤 Audio</button>
-      <button class="tab"        data-tab="appearance">🎨 Appearance</button>
+      <button class="tab active"   data-tab="scroll">📜 Scroll</button>
+      <button class="tab"          data-tab="appearance">🎨 Appearance</button>
+      <button class="tab"          data-tab="audio">🎤 Audio</button>
+      <button class="tab"          data-tab="ai">🤖 AI</button>
+      <button class="tab"          data-tab="browser">🌐 Browser</button>
+      <button class="tab"          data-tab="shortcuts">⌨️ Shortcuts</button>
     </nav>
 
-    <!-- AI tab -->
-    <section id="tab-ai" class="tab-panel">
+    <!-- ── SCROLL TAB (active by default) ────────────────────────────────── -->
+    <section id="tab-scroll" class="tab-panel active">
+
+      <!-- Overlay visibility control -->
+      <div class="section-header">Overlay</div>
+      <div class="field">
+        <div class="protect-row">
+          <div>
+            <strong>Screen-share visibility</strong>
+            <p class="hint-tiny" style="margin:3px 0 0">Controls whether your clients can see the overlay when you share your screen.</p>
+          </div>
+          <button id="btn-protect-ctrl" class="btn-protect-toggle">🙈 Hidden</button>
+        </div>
+      </div>
+
+      <!-- Virtual control panel -->
+      <div class="section-header" style="margin-top:16px">Script control</div>
+      <p class="section-hint">Control the overlay from this window — ideal for a touchscreen secondary monitor.</p>
+
+      <div class="virtual-ctrl-wrap">
+        <div class="ctrl-mode-pill" id="ctrl-mode-pill">
+          <button class="ctrl-mode-tab active" data-mode="manual">⏸ Manual</button>
+          <button class="ctrl-mode-tab"        data-mode="auto">▶ Auto</button>
+          <button class="ctrl-mode-tab"        data-mode="voice">🎙 Voice</button>
+        </div>
+        <div class="vscroll-row">
+          <button id="btn-vscroll-up"   class="vscroll-btn" title="Scroll up">▲</button>
+          <button id="btn-vscroll-down" class="vscroll-btn" title="Scroll down">▼</button>
+        </div>
+      </div>
+
+      <div class="section-header" style="margin-top:20px">Scroll step</div>
+      <div class="field slider-field">
+        <label>Scroll step <span class="val" id="val-scroll">120px</span></label>
+        <input type="range" id="sl-scroll" min="40" max="400" step="10" value="120"/>
+        <p class="hint-tiny">Distance scrolled per ▲▼ button press and keyboard shortcut.</p>
+      </div>
+
+      <div id="scroll-settings-auto" class="scroll-mode-section" style="display:none">
+        <div class="section-header" style="margin-top:16px">Auto-scroll speed</div>
+        <div class="field slider-field">
+          <label>Speed <span class="val" id="val-speed">50px/s</span></label>
+          <input type="range" id="sl-speed" min="10" max="400" step="10" value="50"/>
+          <p class="hint-tiny">Pixels per second. Applies instantly to the overlay.</p>
+        </div>
+      </div>
+
+      <div id="scroll-settings-voice" class="scroll-mode-section" style="display:none">
+        <div class="section-header" style="margin-top:16px">Voice detection</div>
+        <div class="field slider-field">
+          <label>Mic sensitivity <span class="val" id="val-rms">15</span></label>
+          <input type="range" id="sl-rms" min="5" max="80" step="1" value="15"/>
+          <p class="hint-tiny">Lower = more sensitive. Higher = only loud speech triggers scroll.</p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── APPEARANCE TAB ─────────────────────────────────────────────────── -->
+    <section id="tab-appearance" class="tab-panel">
+
+      <div class="section-header">Overlay appearance</div>
+      <p class="section-hint">Changes apply instantly to the overlay — Save to persist them.</p>
+
+      <div class="field slider-field">
+        <label>Background opacity <span class="val" id="val-opacity">75%</span></label>
+        <input type="range" id="sl-opacity" min="20" max="95" value="75"/>
+      </div>
+
+      <div class="field slider-field">
+        <label>Font size <span class="val" id="val-font">22px</span></label>
+        <input type="range" id="sl-font" min="14" max="52" value="22"/>
+      </div>
 
       <div class="field">
-        <label for="ai-provider">Provider</label>
+        <label for="pk-color">Font colour</label>
+        <div class="color-row">
+          <input type="color" id="pk-color" value="#f0f0f0"/>
+          <span class="color-hex" id="color-hex">#f0f0f0</span>
+          <div class="color-presets">
+            <button class="preset" style="background:#f0f0f0" data-color="#f0f0f0" title="White"></button>
+            <button class="preset" style="background:#FFE066" data-color="#FFE066" title="Yellow"></button>
+            <button class="preset" style="background:#69db7c" data-color="#69db7c" title="Green"></button>
+            <button class="preset" style="background:#74c0fc" data-color="#74c0fc" title="Blue"></button>
+            <button class="preset" style="background:#ff6b6b" data-color="#ff6b6b" title="Red"></button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── AUDIO TAB ──────────────────────────────────────────────────────── -->
+    <section id="tab-audio" class="tab-panel">
+
+      <div class="section-header">Microphone</div>
+      <p class="section-hint">Input device used for Q&amp;A recording.</p>
+
+      <div class="field">
+        <label for="audio-device">Device</label>
+        <div class="audio-row">
+          <select id="audio-device"></select>
+          <button class="btn-test" id="btn-refresh-audio" title="Refresh device list">↺ Refresh</button>
+        </div>
+        <p class="hint-tiny" id="audio-perm-hint" style="display:none;color:#fa5252">
+          ⚠️ Grant microphone permission first — click Refresh after allowing it in Electron.
+        </p>
+      </div>
+
+      <!-- System audio / Both / Speaker sections hidden (not ready yet) -->
+      <div id="section-system-audio" style="display:none">
+        <div class="section-header" style="margin-top:14px">Recording source</div>
+        <div class="field">
+          <div class="radio-group" id="recording-source-group">
+            <label class="radio-label">
+              <input type="radio" name="rec-source" value="microphone" checked/>
+              <span><strong>Microphone</strong><em>Your own voice — use this for in-person presentations</em></span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="rec-source" value="system"/>
+              <span><strong>System audio</strong><em>What you hear — via screen-share dialog</em></span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="rec-source" value="both"/>
+              <span><strong>Both</strong><em>Microphone + system audio mixed</em></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div id="section-speaker" style="display:none">
+        <div class="section-header" style="margin-top:14px">Speaker / output</div>
+        <div class="field">
+          <label for="audio-output-device">Device</label>
+          <div class="audio-row">
+            <select id="audio-output-device"></select>
+            <button class="btn-test" id="btn-refresh-output" title="Refresh output device list">↺ Refresh</button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── AI TAB ──────────────────────────────────────────────────────────── -->
+    <section id="tab-ai" class="tab-panel">
+
+      <!-- Q&A Response FIRST -->
+      <div class="section-header">Q&amp;A Response</div>
+      <p class="section-hint">Customise how the AI answers client questions during your presentation.</p>
+
+      <div class="field">
+        <label for="system-prompt">
+          System prompt
+          <button class="btn-reset-prompt" id="btn-reset-prompt" title="Restore default prompt">↩ Reset</button>
+        </label>
+        <textarea id="system-prompt" rows="5" placeholder="Instructions for the AI…" spellcheck="false"></textarea>
+        <p class="hint-tiny">Controls the AI's behaviour and answer style.</p>
+      </div>
+
+      <div class="field">
+        <label for="presentation-context">Presentation context <span class="ex">optional</span></label>
+        <textarea id="presentation-context" rows="3" placeholder="Brief description of your presentation: product, audience, objectives…" spellcheck="false"></textarea>
+        <p class="hint-tiny">Injected before the client's question so the AI gives more relevant answers.</p>
+      </div>
+
+      <!-- AI Provider AFTER Q&A Response -->
+      <div class="section-header" style="margin-top:18px">AI Provider</div>
+      <p class="section-hint">Provider used for chat completions (Q&amp;A answers).</p>
+
+      <div class="field">
+        <label for="ai-provider">Chat provider</label>
         <select id="ai-provider">
           <option value="azure">Azure OpenAI</option>
           <option value="openai">OpenAI</option>
           <option value="groq">Groq</option>
+          <option value="anthropic">Anthropic Claude</option>
+          <option value="gemini">Google Gemini</option>
+          <option value="mistral">Mistral</option>
         </select>
       </div>
+
+      <!-- Transcription override — visible only when main provider lacks Whisper -->
+      <div id="section-transcription" class="field" style="display:none">
+        <label for="transcription-provider">Transcription (Whisper) provider</label>
+        <select id="transcription-provider">
+          <option value="openai">OpenAI</option>
+          <option value="azure">Azure OpenAI</option>
+          <option value="groq">Groq</option>
+        </select>
+        <p class="hint-tiny">⚠️ Anthropic, Gemini and Mistral don't offer a Whisper API. Select a provider here to handle audio transcription.</p>
+      </div>
+
       <!-- Azure section -->
       <div id="section-azure" class="provider-section">
         <div class="section-header">Azure OpenAI credentials</div>
-        <p class="section-hint">Your Azure OpenAI resource — needs a Whisper deployment and a GPT deployment.</p>
+        <p class="section-hint">Needs a Whisper deployment and a GPT deployment.</p>
         <div class="field">
           <label for="az-endpoint">Endpoint URL <span class="ex">e.g. https://my-resource.openai.azure.com</span></label>
           <input type="text" id="az-endpoint" placeholder="https://my-resource.openai.azure.com" autocomplete="off"/>
@@ -110,168 +292,154 @@
         </div>
       </div>
 
-      <!-- Q&A prompt customisation -->
-      <div class="section-header" style="margin-top:18px">Q&amp;A Response</div>
-      <p class="section-hint">Customise how the AI answers client questions during your presentation.</p>
-
-      <div class="field">
-        <label for="system-prompt">
-          System prompt
-          <button class="btn-reset-prompt" id="btn-reset-prompt" title="Restore default prompt">↩ Reset</button>
-        </label>
-        <textarea id="system-prompt" rows="5" placeholder="Instructions for the AI…" spellcheck="false"></textarea>
-        <p class="hint-tiny">Controls the AI's behaviour and answer style. Use {language} to match the client's language automatically.</p>
-      </div>
-
-      <div class="field">
-        <label for="presentation-context">Presentation context <span class="ex">optional</span></label>
-        <textarea id="presentation-context" rows="3" placeholder="Brief description of your presentation: product, audience, objectives…" spellcheck="false"></textarea>
-        <p class="hint-tiny">Injected before the client's question so the AI gives more relevant answers.</p>
-      </div>
-
-    </section>
-
-    <!-- Audio tab -->
-    <section id="tab-audio" class="tab-panel">
-
-      <div class="section-header">Recording source</div>
-      <p class="section-hint">Choose what audio to capture when recording a client question.</p>
-
-      <div class="field">
-        <div class="radio-group" id="recording-source-group">
-          <label class="radio-label">
-            <input type="radio" name="rec-source" value="microphone" checked/>
-            <span>
-              <strong>Microphone</strong>
-              <em>Your own voice — use this for in-person presentations</em>
-            </span>
-          </label>
-          <label class="radio-label">
-            <input type="radio" name="rec-source" value="system"/>
-            <span>
-              <strong>System audio</strong>
-              <em>What you hear — via screen-share dialog (Teams/Zoom remote meetings)</em>
-            </span>
-          </label>
-          <label class="radio-label">
-            <input type="radio" name="rec-source" value="both"/>
-            <span>
-              <strong>Both</strong>
-              <em>Microphone + system audio mixed — best for hybrid scenarios</em>
-            </span>
-          </label>
-        </div>
-        <p class="hint-tiny" style="margin-top:8px">
-          💡 For virtual meetings without screen-share: enable <strong>Stereo Mix</strong> in Windows Sound settings, or install
-          <strong>VB-Cable</strong> (free) — it then appears as a microphone below.
-        </p>
-      </div>
-
-      <div class="section-header" style="margin-top:14px">Microphone</div>
-      <p class="section-hint" id="mic-hint">Input device used in Microphone and Both modes.</p>
-
-      <div class="field">
-        <label for="audio-device">Device</label>
-        <div class="audio-row">
-          <select id="audio-device"></select>
-          <button class="btn-test" id="btn-refresh-audio" title="Refresh device list">↺ Refresh</button>
-        </div>
-        <p class="hint-tiny" id="audio-perm-hint" style="display:none;color:#fa5252">
-          ⚠️ Grant microphone permission first — click Refresh after allowing it in Electron.
-        </p>
-      </div>
-
-      <div class="section-header" style="margin-top:14px">Speaker / output</div>
-      <p class="section-hint">Output device for audio playback (stored for future audio features).</p>
-
-      <div class="field">
-        <label for="audio-output-device">Device</label>
-        <div class="audio-row">
-          <select id="audio-output-device"></select>
-          <button class="btn-test" id="btn-refresh-output" title="Refresh output device list">↺ Refresh</button>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- Appearance tab -->
-    <section id="tab-appearance" class="tab-panel">
-
-      <div class="section-header">Overlay appearance</div>
-      <p class="section-hint">Changes apply instantly to the overlay — Save to persist them.</p>
-
-      <div class="field slider-field">
-        <label>Background opacity <span class="val" id="val-opacity">75%</span></label>
-        <input type="range" id="sl-opacity" min="20" max="95" value="75"/>
-      </div>
-
-      <div class="field slider-field">
-        <label>Font size <span class="val" id="val-font">22px</span></label>
-        <input type="range" id="sl-font" min="14" max="52" value="22"/>
-      </div>
-
-      <div class="field">
-        <label for="pk-color">Font colour</label>
-        <div class="color-row">
-          <input type="color" id="pk-color" value="#f0f0f0"/>
-          <span class="color-hex" id="color-hex">#f0f0f0</span>
-          <div class="color-presets">
-            <button class="preset" style="background:#f0f0f0" data-color="#f0f0f0" title="White"></button>
-            <button class="preset" style="background:#FFE066" data-color="#FFE066" title="Yellow"></button>
-            <button class="preset" style="background:#69db7c" data-color="#69db7c" title="Green"></button>
-            <button class="preset" style="background:#74c0fc" data-color="#74c0fc" title="Blue"></button>
-            <button class="preset" style="background:#ff6b6b" data-color="#ff6b6b" title="Red"></button>
+      <!-- Anthropic section -->
+      <div id="section-anthropic" class="provider-section" style="display:none">
+        <div class="section-header">Anthropic Claude credentials</div>
+        <p class="section-hint">Get your key at <strong>console.anthropic.com</strong>. Chat only — transcription uses the Whisper provider above.</p>
+        <div class="field">
+          <label for="anthropic-key">API Key <span class="ex">sk-ant-…</span></label>
+          <div class="secret-wrap">
+            <input type="password" id="anthropic-key" placeholder="sk-ant-••••••••••••" autocomplete="off"/>
+            <button class="eye-btn" data-for="anthropic-key" title="Show/hide">👁</button>
           </div>
         </div>
+        <div class="field">
+          <label for="anthropic-chat-model">Chat model</label>
+          <select id="anthropic-chat-model">
+            <option value="claude-3-5-haiku-20241022">claude-3-5-haiku (fast)</option>
+            <option value="claude-3-5-sonnet-20241022">claude-3-5-sonnet (balanced)</option>
+            <option value="claude-opus-4-5">claude-opus-4 (powerful)</option>
+          </select>
+        </div>
+        <div class="test-row">
+          <button class="btn-test" id="test-anthropic">Test Connection</button>
+          <span class="test-result" id="res-anthropic"></span>
+        </div>
+      </div>
+
+      <!-- Gemini section -->
+      <div id="section-gemini" class="provider-section" style="display:none">
+        <div class="section-header">Google Gemini credentials</div>
+        <p class="section-hint">Get your key at <strong>aistudio.google.com</strong>. Chat only — transcription uses the Whisper provider above.</p>
+        <div class="field">
+          <label for="gemini-key">API Key</label>
+          <div class="secret-wrap">
+            <input type="password" id="gemini-key" placeholder="AIza••••••••••••" autocomplete="off"/>
+            <button class="eye-btn" data-for="gemini-key" title="Show/hide">👁</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="gemini-chat-model">Chat model</label>
+          <select id="gemini-chat-model">
+            <option value="gemini-2.0-flash">gemini-2.0-flash (fast)</option>
+            <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+            <option value="gemini-1.5-pro">gemini-1.5-pro (powerful)</option>
+          </select>
+        </div>
+        <div class="test-row">
+          <button class="btn-test" id="test-gemini">Test Connection</button>
+          <span class="test-result" id="res-gemini"></span>
+        </div>
+      </div>
+
+      <!-- Mistral section -->
+      <div id="section-mistral" class="provider-section" style="display:none">
+        <div class="section-header">Mistral credentials</div>
+        <p class="section-hint">Get your key at <strong>console.mistral.ai</strong>. Chat only — transcription uses the Whisper provider above.</p>
+        <div class="field">
+          <label for="mistral-key">API Key</label>
+          <div class="secret-wrap">
+            <input type="password" id="mistral-key" placeholder="••••••••••••" autocomplete="off"/>
+            <button class="eye-btn" data-for="mistral-key" title="Show/hide">👁</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="mistral-chat-model">Chat model</label>
+          <select id="mistral-chat-model">
+            <option value="mistral-small-latest">mistral-small (fast)</option>
+            <option value="mistral-large-latest">mistral-large (powerful)</option>
+            <option value="codestral-latest">codestral (code-focused)</option>
+          </select>
+        </div>
+        <div class="test-row">
+          <button class="btn-test" id="test-mistral">Test Connection</button>
+          <span class="test-result" id="res-mistral"></span>
+        </div>
       </div>
 
     </section>
 
-    <!-- Scroll tab — active by default for Controller use -->
-    <section id="tab-scroll" class="tab-panel active">
+    <!-- ── BROWSER TAB ─────────────────────────────────────────────────────── -->
+    <section id="tab-browser" class="tab-panel">
 
-      <!-- ── Virtual control panel ───────────────────────────────────────────── -->
-      <div class="section-header">Script control</div>
-      <p class="section-hint">Control the overlay from this window — ideal for a touchscreen secondary monitor.</p>
+      <div class="section-header">Browser overlay</div>
+      <p class="section-hint">Open a web page in the overlay. Perfect for demos or reference content during your presentation.</p>
 
-      <div class="virtual-ctrl-wrap">
-        <!-- Mode pill -->
-        <div class="ctrl-mode-pill" id="ctrl-mode-pill">
-          <button class="ctrl-mode-tab active" data-mode="manual">⏸ Manual</button>
-          <button class="ctrl-mode-tab"        data-mode="auto">▶ Auto</button>
-          <button class="ctrl-mode-tab"        data-mode="voice">🎙 Voice</button>
+      <div class="field">
+        <label for="browser-url">URL</label>
+        <div class="browser-url-row">
+          <input type="text" id="browser-url" placeholder="https://example.com" autocomplete="off" autocorrect="off" spellcheck="false"/>
+          <button id="btn-load-url" class="btn-primary">Load →</button>
         </div>
-        <!-- Scroll up/down buttons -->
-        <div class="vscroll-row">
-          <button id="btn-vscroll-up"   class="vscroll-btn" title="Scroll up">▲</button>
-          <button id="btn-vscroll-down" class="vscroll-btn" title="Scroll down">▼</button>
-        </div>
+        <p class="hint-tiny">The overlay switches to Browser mode and loads the page. Click Script or Q&amp;A on the overlay to switch back.</p>
       </div>
 
-      <div class="section-header" style="margin-top:20px">Scroll step</div>
-      <div class="field slider-field">
-        <label>Scroll step <span class="val" id="val-scroll">120px</span></label>
-        <input type="range" id="sl-scroll" min="40" max="400" step="10" value="120"/>
-        <p class="hint-tiny">Distance scrolled per ▲▼ button press and keyboard shortcut.</p>
-      </div>
-
-      <div id="scroll-settings-auto" class="scroll-mode-section" style="display:none">
-        <div class="section-header" style="margin-top:16px">Auto-scroll speed</div>
-        <div class="field slider-field">
-          <label>Speed <span class="val" id="val-speed">50px/s</span></label>
-          <input type="range" id="sl-speed" min="10" max="400" step="10" value="50"/>
-          <p class="hint-tiny">Pixels per second. Applies instantly to the overlay.</p>
+      <div class="field">
+        <div class="section-header" style="font-size:11px;margin-bottom:6px;font-weight:600">Quick links</div>
+        <div class="quick-urls">
+          <button class="quick-url-btn" data-url="https://www.google.com">🔍 Google</button>
+          <button class="quick-url-btn" data-url="https://www.bing.com">🔎 Bing</button>
+          <button class="quick-url-btn" data-url="https://slides.google.com">📊 Google Slides</button>
+          <button class="quick-url-btn" data-url="https://onedrive.live.com">☁️ OneDrive</button>
+          <button class="quick-url-btn" data-url="https://www.wikipedia.org">📖 Wikipedia</button>
         </div>
       </div>
 
-      <div id="scroll-settings-voice" class="scroll-mode-section" style="display:none">
-        <div class="section-header" style="margin-top:16px">Voice detection</div>
-        <div class="field slider-field">
-          <label>Mic sensitivity <span class="val" id="val-rms">15</span></label>
-          <input type="range" id="sl-rms" min="5" max="80" step="1" value="15"/>
-          <p class="hint-tiny">Lower = more sensitive. Higher = only loud speech triggers scroll.</p>
-        </div>
-      </div>
+    </section>
+
+    <!-- ── SHORTCUTS TAB ───────────────────────────────────────────────────── -->
+    <section id="tab-shortcuts" class="tab-panel">
+
+      <div class="section-header">Keyboard shortcuts</div>
+      <p class="section-hint">Global — work even when the overlay doesn't have focus.</p>
+
+      <table class="shortcuts-table">
+        <tbody>
+          <tr>
+            <td>Scroll up</td>
+            <td><kbd>Ctrl+Alt+PgUp</kbd></td>
+          </tr>
+          <tr>
+            <td>Scroll down</td>
+            <td><kbd>Ctrl+Alt+PgDn</kbd></td>
+          </tr>
+          <tr>
+            <td>Open Controller</td>
+            <td><kbd>Ctrl+Alt+,</kbd></td>
+          </tr>
+          <tr>
+            <td>Load Script file</td>
+            <td><kbd>Ctrl+Alt+O</kbd></td>
+          </tr>
+          <tr>
+            <td>Toggle Move / Resize mode</td>
+            <td><kbd>Ctrl+Alt+Home</kbd></td>
+          </tr>
+          <tr>
+            <td>Start / Stop Q&amp;A recording</td>
+            <td><kbd>Ctrl+Alt+R</kbd></td>
+          </tr>
+          <tr>
+            <td>Switch Script ↔ Q&amp;A mode</td>
+            <td><kbd>Ctrl+Alt+M</kbd></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="hint-tiny" style="margin-top:12px">
+        💡 <kbd>Ctrl+Alt+↑</kbd> and <kbd>Ctrl+Alt+↓</kbd> have been removed to avoid conflicts with Windows and Teams shortcuts.
+        Use <kbd>Ctrl+Alt+PgUp / PgDn</kbd> instead.
+      </p>
 
     </section>
 
