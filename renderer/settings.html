@@ -248,25 +248,29 @@
         </div>
       </div>
 
-      <div class="section-header" style="margin-top:20px">Manual scroll</div>
+      <div class="section-header" style="margin-top:20px">Scroll step</div>
       <div class="field slider-field">
         <label>Scroll step <span class="val" id="val-scroll">120px</span></label>
         <input type="range" id="sl-scroll" min="40" max="400" step="10" value="120"/>
-        <p class="hint-tiny">Distance scrolled per keypress (Ctrl+Alt+↑/↓)</p>
+        <p class="hint-tiny">Distance scrolled per ▲▼ button press and keyboard shortcut.</p>
       </div>
 
-      <div class="section-header" style="margin-top:16px">Auto / Voice scroll</div>
-      <div class="field slider-field">
-        <label>Auto-scroll speed <span class="val" id="val-speed">50px/s</span></label>
-        <input type="range" id="sl-speed" min="10" max="400" step="10" value="50"/>
-        <p class="hint-tiny">Pixels per second in Auto and Voice modes. Applies instantly.</p>
+      <div id="scroll-settings-auto" class="scroll-mode-section" style="display:none">
+        <div class="section-header" style="margin-top:16px">Auto-scroll speed</div>
+        <div class="field slider-field">
+          <label>Speed <span class="val" id="val-speed">50px/s</span></label>
+          <input type="range" id="sl-speed" min="10" max="400" step="10" value="50"/>
+          <p class="hint-tiny">Pixels per second. Applies instantly to the overlay.</p>
+        </div>
       </div>
 
-      <div class="section-header" style="margin-top:16px">Voice detection</div>
-      <div class="field slider-field">
-        <label>Mic sensitivity <span class="val" id="val-rms">15</span></label>
-        <input type="range" id="sl-rms" min="5" max="80" step="1" value="15"/>
-        <p class="hint-tiny">Lower = more sensitive (triggers on quieter sounds). Higher = only loud speech.</p>
+      <div id="scroll-settings-voice" class="scroll-mode-section" style="display:none">
+        <div class="section-header" style="margin-top:16px">Voice detection</div>
+        <div class="field slider-field">
+          <label>Mic sensitivity <span class="val" id="val-rms">15</span></label>
+          <input type="range" id="sl-rms" min="5" max="80" step="1" value="15"/>
+          <p class="hint-tiny">Lower = more sensitive. Higher = only loud speech triggers scroll.</p>
+        </div>
       </div>
 
     </section>

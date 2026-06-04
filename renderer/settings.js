@@ -89,8 +89,16 @@ document.querySelectorAll('.ctrl-mode-tab').forEach(btn => {
     document.querySelectorAll('.ctrl-mode-tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     window.tpSettings.setScrollMode(btn.dataset.mode);
+    updateScrollSettings(btn.dataset.mode);
   });
 });
+
+function updateScrollSettings(mode) {
+  const showAuto  = mode === 'auto' || mode === 'voice';
+  const showVoice = mode === 'voice';
+  document.getElementById('scroll-settings-auto').style.display  = showAuto  ? '' : 'none';
+  document.getElementById('scroll-settings-voice').style.display = showVoice ? '' : 'none';
+}
 
 // ── Slider live labels + live preview ────────────────────────────────────────
 slOpacity.addEventListener('input', () => {
@@ -187,6 +195,9 @@ async function populate(cfg) {
   valRms.textContent     = slRms.value;
   colorHex.textContent   = pkColor.value;
   syncPresetHighlight();
+
+  // Initialise scroll settings visibility (default mode is manual)
+  updateScrollSettings('manual');
 
   // Audio
   const recSource = cfg.audioRecordingSource || 'microphone';
