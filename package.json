@@ -1,6 +1,6 @@
 {
   "name": "onair",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "onAIr — AI-powered presentation teleprompter overlay for Windows",
   "main": "main.js",
   "author": "Rafael Souza",
