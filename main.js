@@ -268,9 +268,11 @@ function createSettingsWindow() {
   settingsWin = new BrowserWindow({
     width: 520,
     height: 640,
+    minWidth: 400,
+    minHeight: 500,
     title: 'onAIr — Controller',
-    resizable: false,
-    maximizable: false,
+    resizable: true,
+    maximizable: true,
     alwaysOnTop: false,
     skipTaskbar: false,
     icon: path.join(__dirname, 'assets', 'app-icon.png'),
