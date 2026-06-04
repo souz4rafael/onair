@@ -113,7 +113,9 @@ body {
 }
 
 /* Q&A mode: hide pill, show record */
-#app.qa-mode #scroll-pill { display: none; }
+#app.qa-mode     #scroll-pill { display: none; }
+/* Browser mode: also hide pill */
+#app.browser-mode #scroll-pill { display: none; }
 
 /* Record button — bigger and more prominent */
 #btn-record {

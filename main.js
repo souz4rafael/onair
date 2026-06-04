@@ -17,7 +17,8 @@ let win            = null;
 let settingsWin    = null;
 let tray           = null;
 let moveModeActive = false;
-let protected_     = true;  // content protection on by default
+let protected_     = true;   // overlay content-protection on by default
+let protectedCtrl  = false;  // Controller window not protected by default (visible when sharing)
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -65,6 +66,13 @@ const DEFAULT_CONFIG = {
   audioRecordingSource: 'microphone',  // 'microphone' | 'system' | 'both'
   systemPrompt: 'You are a helpful assistant supporting a sales or technical presentation. The presenter received a question from a client and needs a concise answer they can read aloud. Respond in the same language as the question. Keep your answer clear and under 4 sentences.',
   presentationContext: '',
+  quickLinks: [
+    { label: '🔍 Google',        url: 'https://www.google.com' },
+    { label: '🔎 Bing',          url: 'https://www.bing.com' },
+    { label: '📊 Google Slides', url: 'https://slides.google.com' },
+    { label: '☁️ OneDrive',      url: 'https://onedrive.live.com' },
+    { label: '📖 Wikipedia',     url: 'https://www.wikipedia.org' },
+  ],
 };
 
 let config     = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
@@ -96,6 +104,7 @@ function loadConfig() {
       audioRecordingSource: disk.audioRecordingSource || 'microphone',
       systemPrompt:        disk.systemPrompt        ?? DEFAULT_CONFIG.systemPrompt,
       presentationContext: disk.presentationContext || '',
+      quickLinks:          Array.isArray(disk.quickLinks) ? disk.quickLinks : DEFAULT_CONFIG.quickLinks,
     };
   } catch {
     config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
@@ -269,6 +278,11 @@ function createSettingsWindow() {
   settingsWin.loadFile(path.join(__dirname, 'renderer', 'settings.html'));
   settingsWin.setMenuBarVisibility(false);
   settingsWin.on('closed', () => { settingsWin = null; });
+
+  // Send current controller protect state once loaded
+  settingsWin.webContents.on('did-finish-load', () => {
+    settingsWin.webContents.send('controller-protect-state', protectedCtrl);
+  });
 }
 
 // ── Tray ──────────────────────────────────────────────────────────────────────
@@ -659,6 +673,13 @@ ipcMain.handle('toggle-protect', () => {
   return protected_;
 });
 
+ipcMain.handle('toggle-controller-protect', () => {
+  protectedCtrl = !protectedCtrl;
+  settingsWin?.setContentProtection(protectedCtrl);
+  settingsWin?.webContents.send('controller-protect-state', protectedCtrl);
+  return protectedCtrl;
+});
+
 ipcMain.handle('open-file',        () => openFilePicker());
 ipcMain.handle('quit',             () => app.quit());
 ipcMain.handle('minimize',         () => win?.minimize());
@@ -687,7 +708,7 @@ ipcMain.on('load-browser-url', (_, url)   => { win?.webContents.send('load-brows
 
 // ── IPC: settings window ──────────────────────────────────────────────────────
 
-ipcMain.handle('get-config',  () => ({ ...config, __protected: protected_ }));
+ipcMain.handle('get-config',  () => ({ ...config, __protected: protected_, __controllerProtected: protectedCtrl }));
 
 ipcMain.handle('save-config', (_, newConfig) => {
   config = newConfig;

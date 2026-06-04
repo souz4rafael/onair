@@ -167,8 +167,12 @@ function setMode(mode) {
 
 // ── Browser URL from Controller ───────────────────────────────────────────────
 window.tp.onLoadBrowserUrl((url) => {
-  if (browserView) browserView.src = url;
-  setMode('browser');
+  setMode('browser'); // show panel first so webview is visible before load
+  requestAnimationFrame(() => {
+    if (browserView) {
+      try { browserView.loadURL(url); } catch { browserView.src = url; }
+    }
+  });
 });
 
 // ── Recording (MediaRecorder → Whisper → GPT) ─────────────────────────────────

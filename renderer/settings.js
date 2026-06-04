@@ -85,23 +85,23 @@ const btnSave    = document.getElementById('btn-save');
 const btnCancel  = document.getElementById('btn-cancel');
 const saveStatus = document.getElementById('save-status');
 
-// ── Protect toggle (Scroll tab) ───────────────────────────────────────────────
+// ── Protect toggle — controls THIS Controller window's screen-share visibility ──
 const btnProtectCtrl = document.getElementById('btn-protect-ctrl');
 
 function updateProtectButton(isProtected) {
   btnProtectCtrl.textContent = isProtected ? '🙈 Hidden' : '👁 Visible';
   btnProtectCtrl.title       = isProtected
-    ? 'Click to make overlay visible to screen-share'
-    : 'Click to hide overlay from screen-share';
+    ? 'Controller is hidden from screen-share — click to make visible'
+    : 'Controller is visible when screen-sharing — click to hide';
   btnProtectCtrl.classList.toggle('protect-visible', !isProtected);
 }
 
 btnProtectCtrl.addEventListener('click', async () => {
-  const result = await window.tpSettings.toggleProtect();
+  const result = await window.tpSettings.toggleControllerProtect();
   if (result !== undefined) updateProtectButton(result);
 });
 
-window.tpSettings.onProtectState(state => updateProtectButton(state));
+window.tpSettings.onControllerProtectState(state => updateProtectButton(state));
 
 // ── Virtual scroll controls ───────────────────────────────────────────────────
 document.getElementById('btn-vscroll-up').addEventListener('click', () => {
@@ -171,8 +171,70 @@ btnResetPrompt.addEventListener('click', () => {
 });
 
 // ── Browser tab ───────────────────────────────────────────────────────────────
-const browserUrlInput = document.getElementById('browser-url');
-const btnLoadUrl      = document.getElementById('btn-load-url');
+const browserUrlInput   = document.getElementById('browser-url');
+const btnLoadUrl        = document.getElementById('btn-load-url');
+const quickLinksList    = document.getElementById('quick-links-list');
+const quickLinksCount   = document.getElementById('quick-links-count');
+const quickLinksFull    = document.getElementById('quick-links-full');
+const addLinkForm       = document.getElementById('add-link-form');
+const newLinkLabel      = document.getElementById('new-link-label');
+const newLinkUrl        = document.getElementById('new-link-url');
+const btnAddLink        = document.getElementById('btn-add-link');
+const QUICK_LINKS_MAX   = 10;
+
+let quickLinks = [];
+
+function renderQuickLinks() {
+  quickLinksList.innerHTML = '';
+  const count = quickLinks.length;
+  quickLinksCount.textContent = `(${count}/10)`;
+  const full = count >= QUICK_LINKS_MAX;
+  quickLinksFull.style.display = full ? '' : 'none';
+  addLinkForm.style.display    = full ? 'none' : '';
+
+  quickLinks.forEach((link, idx) => {
+    const row = document.createElement('div');
+    row.className = 'quick-link-row';
+
+    const btn = document.createElement('button');
+    btn.className    = 'quick-url-btn';
+    btn.textContent  = link.label;
+    btn.title        = link.url;
+    btn.addEventListener('click', () => {
+      browserUrlInput.value = link.url;
+      loadBrowserUrl();
+    });
+
+    const del = document.createElement('button');
+    del.className   = 'quick-link-delete';
+    del.textContent = '×';
+    del.title       = 'Remove this link';
+    del.addEventListener('click', () => {
+      quickLinks.splice(idx, 1);
+      renderQuickLinks();
+    });
+
+    row.appendChild(btn);
+    row.appendChild(del);
+    quickLinksList.appendChild(row);
+  });
+}
+
+btnAddLink.addEventListener('click', () => {
+  const label = newLinkLabel.value.trim();
+  let   url   = newLinkUrl.value.trim();
+  if (!url) return;
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  if (quickLinks.length >= QUICK_LINKS_MAX) return;
+  quickLinks.push({ label: label || url, url });
+  newLinkLabel.value = '';
+  newLinkUrl.value   = '';
+  renderQuickLinks();
+});
+
+newLinkUrl.addEventListener('keydown', e => {
+  if (e.key === 'Enter') btnAddLink.click();
+});
 
 function loadBrowserUrl() {
   let url = browserUrlInput.value.trim();
@@ -186,21 +248,14 @@ browserUrlInput.addEventListener('keydown', e => {
   if (e.key === 'Enter') loadBrowserUrl();
 });
 
-document.querySelectorAll('.quick-url-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    browserUrlInput.value = btn.dataset.url;
-    loadBrowserUrl();
-  });
-});
-
 // ── Load / populate / build config ───────────────────────────────────────────
 let originalConfig = null;
 
 async function loadConfig() {
   const cfg = await window.tpSettings.getConfig();
   originalConfig = JSON.parse(JSON.stringify(cfg));
-  // Initialise protect button state from config meta-field
-  if (cfg.__protected !== undefined) updateProtectButton(cfg.__protected);
+  // Init Controller protect button state
+  updateProtectButton(cfg.__controllerProtected ?? false);
   await populate(cfg);
 }
 
@@ -268,6 +323,10 @@ async function populate(cfg) {
 
   updateScrollSettings('manual');
 
+  // Browser quick links
+  quickLinks = Array.isArray(cfg.quickLinks) ? [...cfg.quickLinks] : [];
+  renderQuickLinks();
+
   // Audio
   const recSource = cfg.audioRecordingSource || 'microphone';
   recSourceInputs.forEach(r => { r.checked = r.value === recSource; });
@@ -320,6 +379,7 @@ function buildConfig() {
     audioRecordingSource: [...recSourceInputs].find(r => r.checked)?.value || 'microphone',
     systemPrompt:         systemPromptEl.value.trim(),
     presentationContext:  presentationCtxEl.value.trim(),
+    quickLinks:           quickLinks.slice(),
   };
 }
 

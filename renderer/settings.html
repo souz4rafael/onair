@@ -30,10 +30,10 @@
       <div class="field">
         <div class="protect-row">
           <div>
-            <strong>Screen-share visibility</strong>
-            <p class="hint-tiny" style="margin:3px 0 0">Controls whether your clients can see the overlay when you share your screen.</p>
+            <strong>Screen-share visibility (this window)</strong>
+            <p class="hint-tiny" style="margin:3px 0 0">Controls whether this Controller window is visible when you share your screen.</p>
           </div>
-          <button id="btn-protect-ctrl" class="btn-protect-toggle">🙈 Hidden</button>
+          <button id="btn-protect-ctrl" class="btn-protect-toggle">👁 Visible</button>
         </div>
       </div>
 
@@ -385,14 +385,14 @@
       </div>
 
       <div class="field">
-        <div class="section-header" style="font-size:11px;margin-bottom:6px;font-weight:600">Quick links</div>
-        <div class="quick-urls">
-          <button class="quick-url-btn" data-url="https://www.google.com">🔍 Google</button>
-          <button class="quick-url-btn" data-url="https://www.bing.com">🔎 Bing</button>
-          <button class="quick-url-btn" data-url="https://slides.google.com">📊 Google Slides</button>
-          <button class="quick-url-btn" data-url="https://onedrive.live.com">☁️ OneDrive</button>
-          <button class="quick-url-btn" data-url="https://www.wikipedia.org">📖 Wikipedia</button>
+        <div class="section-header" style="font-size:11px;margin-bottom:6px;font-weight:600">Quick links <span id="quick-links-count" class="val" style="font-size:10px;text-transform:none;letter-spacing:0"></span></div>
+        <div id="quick-links-list"></div>
+        <div id="add-link-form" class="add-link-form">
+          <input type="text" id="new-link-label" placeholder="Label (e.g. 📌 My Page)" maxlength="30" autocomplete="off"/>
+          <input type="text" id="new-link-url"   placeholder="https://…" autocomplete="off" spellcheck="false"/>
+          <button id="btn-add-link" class="btn-primary btn-add-link-btn">+ Add</button>
         </div>
+        <p class="hint-tiny" id="quick-links-full" style="display:none;color:#fa5252">Maximum of 10 quick links reached. Delete one to add another.</p>
       </div>
 
     </section>
