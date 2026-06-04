@@ -174,188 +174,62 @@
         <p class="hint-tiny">Injected before the client's question so the AI gives more relevant answers.</p>
       </div>
 
-      <!-- AI Provider AFTER Q&A Response -->
+      <!-- AI Provider -->
       <div class="section-header" style="margin-top:18px">AI Provider</div>
-      <p class="section-hint">Provider used for chat completions (Q&amp;A answers).</p>
 
       <div class="field">
-        <label for="ai-provider">Chat provider</label>
-        <select id="ai-provider">
-          <option value="azure">Azure OpenAI</option>
-          <option value="openai">OpenAI</option>
-          <option value="groq">Groq</option>
-          <option value="anthropic">Anthropic Claude</option>
-          <option value="gemini">Google Gemini</option>
-          <option value="mistral">Mistral</option>
-        </select>
-      </div>
-
-      <!-- Transcription override — visible only when main provider lacks Whisper -->
-      <div id="section-transcription" class="field" style="display:none">
-        <label for="transcription-provider">Transcription (Whisper) provider</label>
-        <select id="transcription-provider">
-          <option value="openai">OpenAI</option>
-          <option value="azure">Azure OpenAI</option>
-          <option value="groq">Groq</option>
-        </select>
-        <p class="hint-tiny">⚠️ Anthropic, Gemini and Mistral don't offer a Whisper API. Select a provider here to handle audio transcription.</p>
-      </div>
-
-      <!-- Azure section -->
-      <div id="section-azure" class="provider-section">
-        <div class="section-header">Azure OpenAI credentials</div>
-        <p class="section-hint">Needs a Whisper deployment and a GPT deployment.</p>
-        <div class="field">
-          <label for="az-endpoint">Endpoint URL <span class="ex">e.g. https://my-resource.openai.azure.com</span></label>
-          <input type="text" id="az-endpoint" placeholder="https://my-resource.openai.azure.com" autocomplete="off"/>
-        </div>
-        <div class="field">
-          <label for="az-key">API Key</label>
-          <div class="secret-wrap">
-            <input type="password" id="az-key" placeholder="••••••••••••••••" autocomplete="off"/>
-            <button class="eye-btn" data-for="az-key" title="Show/hide">👁</button>
-          </div>
-        </div>
-        <div class="field">
-          <label for="az-whisper">Whisper Deployment <span class="ex">e.g. whisper</span></label>
-          <input type="text" id="az-whisper" placeholder="whisper" autocomplete="off"/>
-        </div>
-        <div class="field">
-          <label for="az-chat">Chat Deployment <span class="ex">e.g. gpt-4o</span></label>
-          <input type="text" id="az-chat" placeholder="gpt-4o" autocomplete="off"/>
-        </div>
-        <div class="test-row">
-          <button class="btn-test" id="test-azure">Test Connection</button>
-          <span class="test-result" id="res-azure"></span>
-        </div>
-      </div>
-
-      <!-- OpenAI section -->
-      <div id="section-openai" class="provider-section" style="display:none">
-        <div class="section-header">OpenAI credentials</div>
-        <p class="section-hint">Direct OpenAI API — get your key at <strong>platform.openai.com</strong>.</p>
-        <div class="field">
-          <label for="oai-key">API Key <span class="ex">sk-…</span></label>
-          <div class="secret-wrap">
-            <input type="password" id="oai-key" placeholder="sk-••••••••••••" autocomplete="off"/>
-            <button class="eye-btn" data-for="oai-key" title="Show/hide">👁</button>
-          </div>
-        </div>
-        <div class="field">
-          <label for="oai-whisper-model">Whisper model <span class="ex">whisper-1</span></label>
-          <input type="text" id="oai-whisper-model" placeholder="whisper-1" autocomplete="off"/>
-        </div>
-        <div class="field">
-          <label for="oai-chat-model">Chat model <span class="ex">gpt-4o</span></label>
-          <input type="text" id="oai-chat-model" placeholder="gpt-4o" autocomplete="off"/>
-        </div>
-        <div class="test-row">
-          <button class="btn-test" id="test-openai">Test Connection</button>
-          <span class="test-result" id="res-openai"></span>
-        </div>
-      </div>
-
-      <!-- Groq section -->
-      <div id="section-groq" class="provider-section" style="display:none">
-        <div class="section-header">Groq credentials</div>
-        <p class="section-hint">Free tier available — get your key at <strong>console.groq.com</strong> → API Keys.</p>
-        <div class="field">
-          <label for="groq-key">API Key <span class="ex">gsk_…</span></label>
-          <div class="secret-wrap">
-            <input type="password" id="groq-key" placeholder="gsk-••••••••••••" autocomplete="off"/>
-            <button class="eye-btn" data-for="groq-key" title="Show/hide">👁</button>
-          </div>
-        </div>
-        <div class="field">
-          <label for="groq-whisper-model">Whisper model <span class="ex">whisper-large-v3</span></label>
-          <input type="text" id="groq-whisper-model" placeholder="whisper-large-v3" autocomplete="off"/>
-        </div>
-        <div class="field">
-          <label for="groq-chat-model">Chat model <span class="ex">llama-3.3-70b-versatile</span></label>
-          <input type="text" id="groq-chat-model" placeholder="llama-3.3-70b-versatile" autocomplete="off"/>
-        </div>
-        <div class="test-row">
-          <button class="btn-test" id="test-groq">Test Connection</button>
-          <span class="test-result" id="res-groq"></span>
-        </div>
-      </div>
-
-      <!-- Anthropic section -->
-      <div id="section-anthropic" class="provider-section" style="display:none">
-        <div class="section-header">Anthropic Claude credentials</div>
-        <p class="section-hint">Get your key at <strong>console.anthropic.com</strong>. Chat only — transcription uses the Whisper provider above.</p>
-        <div class="field">
-          <label for="anthropic-key">API Key <span class="ex">sk-ant-…</span></label>
-          <div class="secret-wrap">
-            <input type="password" id="anthropic-key" placeholder="sk-ant-••••••••••••" autocomplete="off"/>
-            <button class="eye-btn" data-for="anthropic-key" title="Show/hide">👁</button>
-          </div>
-        </div>
-        <div class="field">
-          <label for="anthropic-chat-model">Chat model</label>
-          <select id="anthropic-chat-model">
-            <option value="claude-3-5-haiku-20241022">claude-3-5-haiku (fast)</option>
-            <option value="claude-3-5-sonnet-20241022">claude-3-5-sonnet (balanced)</option>
-            <option value="claude-opus-4-5">claude-opus-4 (powerful)</option>
+        <label>Chat provider</label>
+        <div class="provider-select-row">
+          <select id="ai-provider">
+            <option value="azure">Azure OpenAI</option>
+            <option value="openai">OpenAI</option>
+            <option value="groq">Groq</option>
+            <option value="anthropic">Anthropic Claude</option>
+            <option value="gemini">Google Gemini</option>
+            <option value="mistral">Mistral</option>
           </select>
-        </div>
-        <div class="test-row">
-          <button class="btn-test" id="test-anthropic">Test Connection</button>
-          <span class="test-result" id="res-anthropic"></span>
+          <span class="provider-badge" id="badge-chat"></span>
+          <button class="btn-configure" id="btn-configure-chat">⚙ Configure</button>
         </div>
       </div>
 
-      <!-- Gemini section -->
-      <div id="section-gemini" class="provider-section" style="display:none">
-        <div class="section-header">Google Gemini credentials</div>
-        <p class="section-hint">Get your key at <strong>aistudio.google.com</strong>. Chat only — transcription uses the Whisper provider above.</p>
-        <div class="field">
-          <label for="gemini-key">API Key</label>
-          <div class="secret-wrap">
-            <input type="password" id="gemini-key" placeholder="AIza••••••••••••" autocomplete="off"/>
-            <button class="eye-btn" data-for="gemini-key" title="Show/hide">👁</button>
-          </div>
-        </div>
-        <div class="field">
-          <label for="gemini-chat-model">Chat model</label>
-          <select id="gemini-chat-model">
-            <option value="gemini-2.0-flash">gemini-2.0-flash (fast)</option>
-            <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-            <option value="gemini-1.5-pro">gemini-1.5-pro (powerful)</option>
+      <div class="field">
+        <label>Transcription (Whisper) provider</label>
+        <div class="provider-select-row">
+          <select id="transcription-provider">
+            <option value="openai">OpenAI</option>
+            <option value="azure">Azure OpenAI</option>
+            <option value="groq">Groq</option>
           </select>
+          <span class="provider-badge" id="badge-transcription"></span>
+          <button class="btn-configure" id="btn-configure-transcription">⚙ Configure</button>
         </div>
-        <div class="test-row">
-          <button class="btn-test" id="test-gemini">Test Connection</button>
-          <span class="test-result" id="res-gemini"></span>
-        </div>
-      </div>
-
-      <!-- Mistral section -->
-      <div id="section-mistral" class="provider-section" style="display:none">
-        <div class="section-header">Mistral credentials</div>
-        <p class="section-hint">Get your key at <strong>console.mistral.ai</strong>. Chat only — transcription uses the Whisper provider above.</p>
-        <div class="field">
-          <label for="mistral-key">API Key</label>
-          <div class="secret-wrap">
-            <input type="password" id="mistral-key" placeholder="••••••••••••" autocomplete="off"/>
-            <button class="eye-btn" data-for="mistral-key" title="Show/hide">👁</button>
-          </div>
-        </div>
-        <div class="field">
-          <label for="mistral-chat-model">Chat model</label>
-          <select id="mistral-chat-model">
-            <option value="mistral-small-latest">mistral-small (fast)</option>
-            <option value="mistral-large-latest">mistral-large (powerful)</option>
-            <option value="codestral-latest">codestral (code-focused)</option>
-          </select>
-        </div>
-        <div class="test-row">
-          <button class="btn-test" id="test-mistral">Test Connection</button>
-          <span class="test-result" id="res-mistral"></span>
-        </div>
+        <p class="hint-tiny">Anthropic, Gemini and Mistral don't support Whisper — always pick Azure, OpenAI or Groq here.</p>
       </div>
 
     </section>
+
+    <!-- ── PROVIDER CONFIG MODAL ──────────────────────────────────────────── -->
+    <div id="provider-modal" class="modal-overlay">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h2 id="modal-title">Configure Provider</h2>
+          <button id="btn-modal-close" class="modal-close" title="Close">✕</button>
+        </div>
+        <div class="modal-body">
+          <p id="modal-hint" class="section-hint"></p>
+          <div id="modal-fields"></div>
+          <div class="modal-test-row">
+            <button id="btn-modal-test" class="btn-test">Test Connection</button>
+            <span id="modal-test-result" class="test-result"></span>
+          </div>
+        </div>
+        <div class="modal-footer-btns">
+          <button id="btn-modal-cancel" class="btn-secondary">Cancel</button>
+          <button id="btn-modal-save"   class="btn-primary">Save</button>
+        </div>
+      </div>
+    </div>
 
     <!-- ── BROWSER TAB ─────────────────────────────────────────────────────── -->
     <section id="tab-browser" class="tab-panel">

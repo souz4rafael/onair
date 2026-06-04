@@ -32,7 +32,7 @@ const browserView  = document.getElementById('browser-view');
 let scrollY      = 0;
 let maxScroll    = 0;
 let uiVisible    = false;
-let moveMode     = false;
+let moveMode     = true;   // match main.js default: start in move mode
 let isRecording  = false;
 let currentMode  = 'script'; // 'script' | 'qa' | 'browser'
 let mediaRecorder = null;
@@ -66,6 +66,11 @@ let trackStream        = null;
 // Ctrl+Alt+Home (or 🔓 button) toggles interactive/click-through.
 // In Move Mode: window is fully interactive, user can drag the title bar area
 // and resize from edges. Blue border gives visual confirmation.
+
+// Apply initial move-mode state immediately (no IPC wait needed)
+appEl.classList.add('move-mode', 'ui-visible');
+btnMove.textContent = '🔒';
+btnMove.title = 'Lock (click-through mode) — Ctrl+Alt+Home';
 
 window.tp.onMoveMode((active) => {
   moveMode = active;

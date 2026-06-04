@@ -19,44 +19,217 @@ document.querySelectorAll('.eye-btn').forEach(btn => {
   });
 });
 
-// ── Provider selector ─────────────────────────────────────────────────────────
-const WHISPER_PROVIDERS = ['azure', 'openai', 'groq'];
-const ALL_PROVIDERS     = ['azure', 'openai', 'groq', 'anthropic', 'gemini', 'mistral'];
-const providerSel       = document.getElementById('ai-provider');
-const transcriptionSel  = document.getElementById('transcription-provider');
-const sectionTranscription = document.getElementById('section-transcription');
+// ── Provider config ───────────────────────────────────────────────────────────
+const PROVIDER_META = {
+  azure:     { name: 'Azure OpenAI',       hint: 'Needs a Whisper deployment and a GPT deployment. Get credentials in the Azure portal.',
+    fields: [
+      { id: 'endpoint',          label: 'Endpoint URL',        type: 'text',     placeholder: 'https://my-resource.openai.azure.com' },
+      { id: 'key',               label: 'API Key',             type: 'password', placeholder: '••••••••••••••••' },
+      { id: 'whisperDeployment', label: 'Whisper Deployment',  type: 'text',     placeholder: 'whisper',  hint: 'e.g. whisper' },
+      { id: 'chatDeployment',    label: 'Chat Deployment',     type: 'text',     placeholder: 'gpt-4o',   hint: 'e.g. gpt-4o' },
+    ]},
+  openai:    { name: 'OpenAI',             hint: 'Direct OpenAI API — get your key at platform.openai.com.',
+    fields: [
+      { id: 'key',          label: 'API Key',       type: 'password', placeholder: 'sk-••••••••••••' },
+      { id: 'whisperModel', label: 'Whisper model', type: 'text',     placeholder: 'whisper-1',  defaultVal: 'whisper-1' },
+      { id: 'chatModel',    label: 'Chat model',    type: 'text',     placeholder: 'gpt-4o',     defaultVal: 'gpt-4o' },
+    ]},
+  groq:      { name: 'Groq',               hint: 'Free tier available — get your key at console.groq.com → API Keys.',
+    fields: [
+      { id: 'key',          label: 'API Key',       type: 'password', placeholder: 'gsk-••••••••' },
+      { id: 'whisperModel', label: 'Whisper model', type: 'text',     placeholder: 'whisper-large-v3',      defaultVal: 'whisper-large-v3' },
+      { id: 'chatModel',    label: 'Chat model',    type: 'text',     placeholder: 'llama-3.3-70b-versatile', defaultVal: 'llama-3.3-70b-versatile' },
+    ]},
+  anthropic: { name: 'Anthropic Claude',   hint: 'Chat only — get your key at console.anthropic.com. Transcription will use the Whisper provider.',
+    fields: [
+      { id: 'key',       label: 'API Key',    type: 'password', placeholder: 'sk-ant-••••••••' },
+      { id: 'chatModel', label: 'Chat model', type: 'select',
+        options: [
+          { value: 'claude-3-5-haiku-20241022',  label: 'claude-3-5-haiku (fast)' },
+          { value: 'claude-3-5-sonnet-20241022', label: 'claude-3-5-sonnet (balanced)' },
+          { value: 'claude-opus-4-5',            label: 'claude-opus-4 (powerful)' },
+        ], defaultVal: 'claude-3-5-haiku-20241022' },
+    ]},
+  gemini:    { name: 'Google Gemini',      hint: 'Chat only — get your key at aistudio.google.com. Transcription will use the Whisper provider.',
+    fields: [
+      { id: 'key',       label: 'API Key',    type: 'password', placeholder: 'AIza••••••••' },
+      { id: 'chatModel', label: 'Chat model', type: 'select',
+        options: [
+          { value: 'gemini-2.0-flash', label: 'gemini-2.0-flash (fast)' },
+          { value: 'gemini-1.5-flash', label: 'gemini-1.5-flash' },
+          { value: 'gemini-1.5-pro',   label: 'gemini-1.5-pro (powerful)' },
+        ], defaultVal: 'gemini-2.0-flash' },
+    ]},
+  mistral:   { name: 'Mistral',            hint: 'Chat only — get your key at console.mistral.ai. Transcription will use the Whisper provider.',
+    fields: [
+      { id: 'key',       label: 'API Key',    type: 'password', placeholder: '••••••••' },
+      { id: 'chatModel', label: 'Chat model', type: 'select',
+        options: [
+          { value: 'mistral-small-latest', label: 'mistral-small (fast)' },
+          { value: 'mistral-large-latest', label: 'mistral-large (powerful)' },
+          { value: 'codestral-latest',     label: 'codestral (code-focused)' },
+        ], defaultVal: 'mistral-small-latest' },
+    ]},
+};
 
-function showProviderSection(p) {
-  ALL_PROVIDERS.forEach(id => {
-    document.getElementById(`section-${id}`).style.display = id === p ? '' : 'none';
-  });
-  // Show transcription override only for providers without Whisper
-  const needsWhisperOverride = !WHISPER_PROVIDERS.includes(p);
-  sectionTranscription.style.display = needsWhisperOverride ? '' : 'none';
+// Per-provider credential store (loaded from config, updated when modal saves)
+let providerConfigs = {};
+
+function isConfigured(provider) {
+  const c = providerConfigs[provider] || {};
+  return provider === 'azure' ? !!(c.endpoint && c.key) : !!c.key;
 }
 
-providerSel.addEventListener('change', () => showProviderSection(providerSel.value));
+function updateProviderBadge(badgeId, provider) {
+  const el = document.getElementById(badgeId);
+  if (!el) return;
+  el.textContent = isConfigured(provider) ? '✅' : '';
+  el.title       = isConfigured(provider) ? `${PROVIDER_META[provider].name} configured` : '';
+}
 
-// ── DOM refs — AI ─────────────────────────────────────────────────────────────
-const azEndpoint     = document.getElementById('az-endpoint');
-const azKey          = document.getElementById('az-key');
-const azWhisper      = document.getElementById('az-whisper');
-const azChat         = document.getElementById('az-chat');
-const oaiKey         = document.getElementById('oai-key');
-const oaiWhisperMod  = document.getElementById('oai-whisper-model');
-const oaiChatMod     = document.getElementById('oai-chat-model');
-const groqKey        = document.getElementById('groq-key');
-const groqWhisperMod = document.getElementById('groq-whisper-model');
-const groqChatMod    = document.getElementById('groq-chat-model');
-const anthropicKey   = document.getElementById('anthropic-key');
-const anthropicModel = document.getElementById('anthropic-chat-model');
-const geminiKey      = document.getElementById('gemini-key');
-const geminiModel    = document.getElementById('gemini-chat-model');
-const mistralKey     = document.getElementById('mistral-key');
-const mistralModel   = document.getElementById('mistral-chat-model');
-const systemPromptEl      = document.getElementById('system-prompt');
-const presentationCtxEl   = document.getElementById('presentation-context');
-const btnResetPrompt      = document.getElementById('btn-reset-prompt');
+// ── Provider selectors ────────────────────────────────────────────────────────
+const providerSel      = document.getElementById('ai-provider');
+const transcriptionSel = document.getElementById('transcription-provider');
+
+providerSel.addEventListener('change',      () => updateProviderBadge('badge-chat',         providerSel.value));
+transcriptionSel.addEventListener('change', () => updateProviderBadge('badge-transcription', transcriptionSel.value));
+
+document.getElementById('btn-configure-chat').addEventListener('click',         () => openProviderModal(providerSel.value));
+document.getElementById('btn-configure-transcription').addEventListener('click', () => openProviderModal(transcriptionSel.value));
+
+// ── Provider config modal ─────────────────────────────────────────────────────
+const providerModal   = document.getElementById('provider-modal');
+const modalTitle      = document.getElementById('modal-title');
+const modalHint       = document.getElementById('modal-hint');
+const modalFields     = document.getElementById('modal-fields');
+const modalTestBtn    = document.getElementById('btn-modal-test');
+const modalTestResult = document.getElementById('modal-test-result');
+let   currentModalProvider = null;
+
+function openProviderModal(provider) {
+  const meta = PROVIDER_META[provider];
+  if (!meta) return;
+  currentModalProvider = provider;
+
+  modalTitle.textContent = `Configure — ${meta.name}`;
+  modalHint.textContent  = meta.hint;
+  modalTestResult.textContent = '';
+  modalTestResult.className   = 'test-result';
+  modalFields.innerHTML = '';
+
+  const saved = providerConfigs[provider] || {};
+
+  for (const f of meta.fields) {
+    const fieldDiv = document.createElement('div');
+    fieldDiv.className = 'field';
+
+    const lbl = document.createElement('label');
+    lbl.htmlFor    = `mf-${f.id}`;
+    lbl.textContent = f.label;
+    if (f.hint) {
+      const ex = document.createElement('span');
+      ex.className   = 'ex';
+      ex.textContent = ' ' + f.hint;
+      lbl.appendChild(ex);
+    }
+    fieldDiv.appendChild(lbl);
+
+    if (f.type === 'select') {
+      const sel = document.createElement('select');
+      sel.id = `mf-${f.id}`;
+      sel.dataset.fieldId = f.id;
+      for (const opt of f.options) {
+        const o = document.createElement('option');
+        o.value = opt.value; o.textContent = opt.label;
+        sel.appendChild(o);
+      }
+      sel.value = saved[f.id] || f.defaultVal || f.options[0].value;
+      fieldDiv.appendChild(sel);
+    } else {
+      const wrap = document.createElement('div');
+      wrap.className = 'secret-wrap';
+      const inp = document.createElement('input');
+      inp.type        = f.type;
+      inp.id          = `mf-${f.id}`;
+      inp.dataset.fieldId = f.id;
+      inp.placeholder = f.placeholder || '';
+      inp.value       = saved[f.id] || f.defaultVal || '';
+      inp.autocomplete = 'off';
+      wrap.appendChild(inp);
+      if (f.type === 'password') {
+        const eye = document.createElement('button');
+        eye.className   = 'eye-btn';
+        eye.textContent = '👁';
+        eye.title       = 'Show/hide';
+        eye.addEventListener('click', () => {
+          inp.type = inp.type === 'password' ? 'text' : 'password';
+          eye.textContent = inp.type === 'password' ? '👁' : '🙈';
+        });
+        wrap.appendChild(eye);
+      }
+      fieldDiv.appendChild(wrap);
+    }
+
+    modalFields.appendChild(fieldDiv);
+  }
+
+  providerModal.classList.add('open');
+}
+
+function closeProviderModal() {
+  providerModal.classList.remove('open');
+  currentModalProvider = null;
+}
+
+function getModalValues() {
+  const values = {};
+  modalFields.querySelectorAll('[data-field-id]').forEach(el => {
+    values[el.dataset.fieldId] = el.value.trim();
+  });
+  return values;
+}
+
+document.getElementById('btn-modal-close').addEventListener('click',  closeProviderModal);
+document.getElementById('btn-modal-cancel').addEventListener('click', closeProviderModal);
+
+document.getElementById('btn-modal-save').addEventListener('click', () => {
+  if (!currentModalProvider) return;
+  providerConfigs[currentModalProvider] = {
+    ...(providerConfigs[currentModalProvider] || {}),
+    ...getModalValues(),
+  };
+  updateProviderBadge('badge-chat',         providerSel.value);
+  updateProviderBadge('badge-transcription', transcriptionSel.value);
+  closeProviderModal();
+});
+
+modalTestBtn.addEventListener('click', async () => {
+  if (!currentModalProvider) return;
+  const vals   = getModalValues();
+  modalTestBtn.disabled       = true;
+  modalTestResult.textContent = '⏳ Testing…';
+  modalTestResult.className   = 'test-result';
+  try {
+    const r = await window.tpSettings.testConnection({ provider: currentModalProvider, cfg: vals });
+    modalTestResult.textContent = r.ok ? '✅ Connected!' : `❌ ${r.error || 'Failed'}`;
+    modalTestResult.className   = r.ok ? 'test-result ok' : 'test-result err';
+  } catch (e) {
+    modalTestResult.textContent = `❌ ${e.message}`;
+    modalTestResult.className   = 'test-result err';
+  } finally {
+    modalTestBtn.disabled = false;
+  }
+});
+
+// Close modal on backdrop click
+providerModal.addEventListener('click', e => {
+  if (e.target === providerModal) closeProviderModal();
+});
+
+// ── DOM refs — AI (Q&A prompt only — provider fields are in modal) ─────────────
+const systemPromptEl    = document.getElementById('system-prompt');
+const presentationCtxEl = document.getElementById('presentation-context');
+const btnResetPrompt    = document.getElementById('btn-reset-prompt');
 
 // ── DOM refs — Audio ──────────────────────────────────────────────────────────
 const audioDeviceSel  = document.getElementById('audio-device');
@@ -260,46 +433,21 @@ async function loadConfig() {
 }
 
 async function populate(cfg) {
-  // Provider
-  providerSel.value = cfg.provider || 'azure';
-  showProviderSection(providerSel.value);
-
-  // Transcription override
+  // Provider selectors
+  providerSel.value      = cfg.provider              || 'azure';
   transcriptionSel.value = cfg.transcriptionProvider || 'openai';
 
-  // Azure
-  const az = cfg.azure || {};
-  azEndpoint.value = az.endpoint          || '';
-  azKey.value      = az.key               || '';
-  azWhisper.value  = az.whisperDeployment || '';
-  azChat.value     = az.chatDeployment    || '';
-
-  // OpenAI
-  const oai = cfg.openai || {};
-  oaiKey.value        = oai.key          || '';
-  oaiWhisperMod.value = oai.whisperModel || 'whisper-1';
-  oaiChatMod.value    = oai.chatModel    || 'gpt-4o';
-
-  // Groq
-  const groq = cfg.groq || {};
-  groqKey.value        = groq.key          || '';
-  groqWhisperMod.value = groq.whisperModel || 'whisper-large-v3';
-  groqChatMod.value    = groq.chatModel    || 'llama-3.3-70b-versatile';
-
-  // Anthropic
-  const anth = cfg.anthropic || {};
-  anthropicKey.value   = anth.key       || '';
-  anthropicModel.value = anth.chatModel || 'claude-3-5-haiku-20241022';
-
-  // Gemini
-  const gem = cfg.gemini || {};
-  geminiKey.value   = gem.key       || '';
-  geminiModel.value = gem.chatModel || 'gemini-2.0-flash';
-
-  // Mistral
-  const mist = cfg.mistral || {};
-  mistralKey.value   = mist.key       || '';
-  mistralModel.value = mist.chatModel || 'mistral-small-latest';
+  // Load all provider credentials into providerConfigs store
+  providerConfigs = {
+    azure:     { ...(cfg.azure     || {}) },
+    openai:    { ...(cfg.openai    || {}) },
+    groq:      { ...(cfg.groq      || {}) },
+    anthropic: { ...(cfg.anthropic || {}) },
+    gemini:    { ...(cfg.gemini    || {}) },
+    mistral:   { ...(cfg.mistral   || {}) },
+  };
+  updateProviderBadge('badge-chat',          providerSel.value);
+  updateProviderBadge('badge-transcription', transcriptionSel.value);
 
   // Q&A prompt
   systemPromptEl.value    = cfg.systemPrompt       || '';
@@ -338,34 +486,12 @@ function buildConfig() {
   return {
     provider:              providerSel.value,
     transcriptionProvider: transcriptionSel.value,
-    azure: {
-      endpoint:          azEndpoint.value.trim(),
-      key:               azKey.value.trim(),
-      whisperDeployment: azWhisper.value.trim(),
-      chatDeployment:    azChat.value.trim(),
-    },
-    openai: {
-      key:          oaiKey.value.trim(),
-      whisperModel: oaiWhisperMod.value.trim() || 'whisper-1',
-      chatModel:    oaiChatMod.value.trim()    || 'gpt-4o',
-    },
-    groq: {
-      key:          groqKey.value.trim(),
-      whisperModel: groqWhisperMod.value.trim() || 'whisper-large-v3',
-      chatModel:    groqChatMod.value.trim()    || 'llama-3.3-70b-versatile',
-    },
-    anthropic: {
-      key:       anthropicKey.value.trim(),
-      chatModel: anthropicModel.value,
-    },
-    gemini: {
-      key:       geminiKey.value.trim(),
-      chatModel: geminiModel.value,
-    },
-    mistral: {
-      key:       mistralKey.value.trim(),
-      chatModel: mistralModel.value,
-    },
+    azure:     { ...providerConfigs.azure     },
+    openai:    { ...providerConfigs.openai    },
+    groq:      { ...providerConfigs.groq      },
+    anthropic: { ...providerConfigs.anthropic },
+    gemini:    { ...providerConfigs.gemini    },
+    mistral:   { ...providerConfigs.mistral   },
     appearance: {
       opacity:           parseInt(slOpacity.value, 10),
       fontSize:          parseInt(slFont.value, 10),
@@ -382,48 +508,6 @@ function buildConfig() {
     quickLinks:           quickLinks.slice(),
   };
 }
-
-// ── Test connections ──────────────────────────────────────────────────────────
-async function runTest(btnEl, resultEl, provider, cfg) {
-  btnEl.disabled       = true;
-  resultEl.textContent = '⏳ Testing…';
-  resultEl.className   = 'test-result';
-  try {
-    const r = await window.tpSettings.testConnection({ provider, cfg });
-    resultEl.textContent = r.ok ? '✅ Connected!' : `❌ ${r.error || 'Failed'}`;
-    resultEl.className   = r.ok ? 'test-result ok' : 'test-result err';
-  } catch (e) {
-    resultEl.textContent = `❌ ${e.message}`;
-    resultEl.className   = 'test-result err';
-  } finally {
-    btnEl.disabled = false;
-  }
-}
-
-document.getElementById('test-azure').addEventListener('click', () =>
-  runTest(document.getElementById('test-azure'), document.getElementById('res-azure'),
-    'azure', { endpoint: azEndpoint.value.trim(), key: azKey.value.trim() })
-);
-document.getElementById('test-openai').addEventListener('click', () =>
-  runTest(document.getElementById('test-openai'), document.getElementById('res-openai'),
-    'openai', { key: oaiKey.value.trim() })
-);
-document.getElementById('test-groq').addEventListener('click', () =>
-  runTest(document.getElementById('test-groq'), document.getElementById('res-groq'),
-    'groq', { key: groqKey.value.trim() })
-);
-document.getElementById('test-anthropic').addEventListener('click', () =>
-  runTest(document.getElementById('test-anthropic'), document.getElementById('res-anthropic'),
-    'anthropic', { key: anthropicKey.value.trim() })
-);
-document.getElementById('test-gemini').addEventListener('click', () =>
-  runTest(document.getElementById('test-gemini'), document.getElementById('res-gemini'),
-    'gemini', { key: geminiKey.value.trim() })
-);
-document.getElementById('test-mistral').addEventListener('click', () =>
-  runTest(document.getElementById('test-mistral'), document.getElementById('res-mistral'),
-    'mistral', { key: mistralKey.value.trim() })
-);
 
 // ── Audio device enumeration ───────────────────────────────────────────────────
 async function populateAudioDevices(savedId = '') {
