@@ -53,10 +53,11 @@ let voiceStream    = null;
 let voiceTimerId   = null;
 let voiceRmsThreshold = 0.015; // updated from config (settings value / 1000)
 
-// Word tracking
-let wordSpans      = [];
-let trackWordIdx   = 0;
-let recognition    = null;
+// Word tracking (Whisper-based loop)
+let wordSpans          = [];
+let trackWordIdx       = 0;
+let trackMediaRecorder = null;
+let trackStream        = null;
 
 // ── Move Mode ─────────────────────────────────────────────────────────────────
 // Ctrl+Alt+Home (or 🔓 button) toggles interactive/click-through.
@@ -444,23 +445,37 @@ function tokenizeScript(text) {
 
 // ── Word tracking (Web Speech API) ───────────────────────────────────────────
 
-function startWordTracking() {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    console.warn('[word-track] SpeechRecognition not available in this Electron build.');
+// ── Word tracking (Whisper chunk loop) ───────────────────────────────────────
+// Records 4-second audio chunks via MediaRecorder, transcribes each one with
+// Whisper, and matches the returned words against the script to advance the
+// word highlight and scroll position.
+
+async function startWordTracking() {
+  if (!wordSpans.length) {
+    console.warn('[word-track] no word spans — load a script first');
     return;
   }
-  if (!wordSpans.length) return;
+  try {
+    const audioConstraints = savedAudioDeviceId
+      ? { deviceId: { exact: savedAudioDeviceId } } : true;
+    trackStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints, video: false });
+  } catch (e) {
+    console.warn('[word-track] mic error:', e.message);
+    return;
+  }
 
-  recognition             = new SR();
-  recognition.continuous  = true;
-  recognition.interimResults = true;
-  recognition.lang        = navigator.language || 'en-US';
+  const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+    ? 'audio/webm;codecs=opus' : 'audio/webm';
+  trackMediaRecorder = new MediaRecorder(trackStream, { mimeType });
 
-  recognition.onresult = (event) => {
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      const spoken = event.results[i][0].transcript.trim();
-      const words  = spoken.split(/\s+/).filter(Boolean);
+  trackMediaRecorder.addEventListener('dataavailable', async (e) => {
+    if (scrollMode !== 'track') return;          // stopped mid-chunk
+    if (e.data.size < 1000) return;              // skip near-empty (silence)
+    try {
+      const buf    = await e.data.arrayBuffer();
+      const result = await window.tp.transcribeAudio(buf);
+      if (!result.ok || !result.text) return;
+      const words  = result.text.trim().split(/\s+/).filter(Boolean);
       for (const word of words) {
         const match = matchWordInScript(word, trackWordIdx);
         if (match !== -1) {
@@ -468,24 +483,23 @@ function startWordTracking() {
           trackWordIdx = match + 1;
         }
       }
+    } catch (err) {
+      console.warn('[word-track] transcription error:', err.message);
     }
-  };
+  });
 
-  recognition.onerror = (e) => {
-    if (e.error === 'no-speech') return; // normal during silence
-    console.warn('[word-track] error:', e.error);
-  };
-
-  recognition.onend = () => {
-    // Auto-restart so tracking continues uninterrupted
-    if (scrollMode === 'track') setTimeout(() => { try { recognition?.start(); } catch {} }, 200);
-  };
-
-  try { recognition.start(); } catch (e) { console.warn('[word-track] start failed:', e.message); }
+  trackMediaRecorder.start(4000); // fire dataavailable every 4 s
 }
 
 function stopWordTracking() {
-  if (recognition) { try { recognition.stop(); } catch {} recognition = null; }
+  if (trackMediaRecorder && trackMediaRecorder.state !== 'inactive') {
+    try { trackMediaRecorder.stop(); } catch {}
+  }
+  if (trackStream) {
+    trackStream.getTracks().forEach(t => t.stop());
+    trackStream = null;
+  }
+  trackMediaRecorder = null;
   trackWordIdx = 0;
 }
 
