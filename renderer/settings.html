@@ -12,7 +12,7 @@
       <h1>onAIr Controller</h1>
     </header>
 
-    <!-- Tabs: Scroll (default) | Appearance | Audio | AI | Browser | Shortcuts -->
+    <!-- Tabs: Scroll (default) | Appearance | Audio | AI | Browser | Shortcuts | About -->
     <nav id="tabs">
       <button class="tab active"   data-tab="scroll">📜 Scroll</button>
       <button class="tab"          data-tab="appearance">🎨 Appearance</button>
@@ -20,10 +20,20 @@
       <button class="tab"          data-tab="ai">🤖 AI</button>
       <button class="tab"          data-tab="browser">🌐 Browser</button>
       <button class="tab"          data-tab="shortcuts">⌨️ Shortcuts</button>
+      <button class="tab"          data-tab="about">ℹ️ About</button>
     </nav>
 
     <!-- ── SCROLL TAB (active by default) ────────────────────────────────── -->
     <section id="tab-scroll" class="tab-panel active">
+
+      <!-- Load script -->
+      <div class="section-header">Script</div>
+      <div class="field">
+        <div class="load-script-row">
+          <button id="btn-load-script-ctrl" class="btn-load-script">📂 Load Script file…</button>
+          <span id="ctrl-filename" class="ctrl-filename">No file loaded</span>
+        </div>
+      </div>
 
       <!-- Virtual control panel -->
       <div class="section-header" style="margin-top:16px">Script control</div>
@@ -302,6 +312,52 @@
         💡 <kbd>Ctrl+Alt+↑</kbd> and <kbd>Ctrl+Alt+↓</kbd> have been removed to avoid conflicts with Windows and Teams shortcuts.
         Use <kbd>Ctrl+Alt+PgUp / PgDn</kbd> instead.
       </p>
+
+    </section>
+
+    <!-- ── ABOUT TAB ──────────────────────────────────────────────────────── -->
+    <section id="tab-about" class="tab-panel">
+
+      <div class="about-logo">onAIr</div>
+      <p class="about-version">Version <strong id="about-version">…</strong></p>
+      <p class="about-tagline">The teleprompter overlay that thinks it's a startup.</p>
+
+      <div class="about-divider"></div>
+
+      <div class="section-header">The Team</div>
+
+      <div class="about-creator">
+        <div class="about-creator-name">Rafael Souza 🧠</div>
+        <p class="about-creator-bio">
+          Solution Engineer. Visionary. The human behind every "wouldn't it be cool if…" at 11pm.
+          Rafa conceived onAIr, designed the UX, filed the bug reports, and kept demanding new features
+          before the last ones were finished — which is a great way to build software and an even better
+          way to stress-test an AI. Somehow makes it all work in real client presentations.
+        </p>
+      </div>
+
+      <div class="about-creator">
+        <div class="about-creator-name">Seba (GitHub Copilot / Claude Sonnet) 🤖</div>
+        <p class="about-creator-bio">
+          AI co-author. Writes the code, fixes the bugs introduced in the previous commit,
+          and insists every architectural decision was intentional. Has shipped more features
+          in one evening than most projects do in a sprint. Does not drink coffee. This shows.
+          Powered by Anthropic Claude Sonnet — who, ironically, is also one of the AI providers
+          you can configure in the AI tab.
+        </p>
+      </div>
+
+      <div class="about-divider"></div>
+
+      <p class="about-footer-text">
+        Built with ❤️, excessive ambition, and a suspicious number of late-night commits.<br/>
+        No plants were harmed. A few sleep schedules may have been.
+      </p>
+
+      <div class="about-links">
+        <a class="about-link" id="link-github" href="#">View on GitHub</a>
+        <button class="about-link" id="btn-check-updates">Check for Updates</button>
+      </div>
 
     </section>
 

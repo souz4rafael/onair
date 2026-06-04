@@ -421,6 +421,34 @@ browserUrlInput.addEventListener('keydown', e => {
   if (e.key === 'Enter') loadBrowserUrl();
 });
 
+// ── Load Script (Controller) ──────────────────────────────────────────────────
+const btnLoadScriptCtrl = document.getElementById('btn-load-script-ctrl');
+const ctrlFilename      = document.getElementById('ctrl-filename');
+
+btnLoadScriptCtrl.addEventListener('click', async () => {
+  await window.tpSettings.openFile();
+});
+
+window.tpSettings.onLoadedScript(name => {
+  ctrlFilename.textContent = name;
+  ctrlFilename.title = name;
+});
+
+// ── About tab ─────────────────────────────────────────────────────────────────
+window.tpSettings.getAppVersion().then(v => {
+  const el = document.getElementById('about-version');
+  if (el) el.textContent = v;
+});
+
+document.getElementById('btn-check-updates').addEventListener('click', () => {
+  window.tpSettings.checkForUpdates();
+});
+
+document.getElementById('link-github').addEventListener('click', e => {
+  e.preventDefault();
+  window.tpSettings.loadBrowserUrl('https://github.com/souz4rafael/onair');
+});
+
 // ── Load / populate / build config ───────────────────────────────────────────
 let originalConfig = null;
 

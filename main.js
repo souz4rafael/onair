@@ -183,6 +183,9 @@ function sendScript(filePath) {
   try {
     const text = fs.readFileSync(filePath, 'utf-8');
     win.webContents.send('load-script', { text, filePath });
+    // Notify Controller of the loaded filename
+    const name = filePath.replace(/\\/g, '/').split('/').pop();
+    settingsWin?.webContents.send('ctrl-script-loaded', name);
   } catch (e) {
     console.error('Could not read file:', e.message);
   }
@@ -647,6 +650,8 @@ app.whenReady().then(() => {
   registerHotkeys();
   createTray();
   setupAutoUpdater();
+  // Open Controller window automatically on launch
+  createSettingsWindow();
   // Check for updates 10s after launch — quiet, only prompts if update found
   setTimeout(() => checkForUpdates(true), 10_000);
 });
@@ -710,6 +715,10 @@ ipcMain.on('set-scroll-mode',  (_, mode)  => { win?.webContents.send('set-scroll
 ipcMain.on('load-browser-url', (_, url)   => { win?.webContents.send('load-browser-url', url);   });
 
 // ── IPC: settings window ──────────────────────────────────────────────────────
+
+ipcMain.handle('check-for-updates', () => checkForUpdates(false));
+
+ipcMain.handle('get-app-version', () => app.getVersion());
 
 ipcMain.handle('get-config',  () => ({ ...config, __protected: protected_, __controllerProtected: protectedCtrl }));
 

@@ -556,6 +556,106 @@ label .btn-reset-prompt:hover { color: var(--text); border-color: rgba(255,255,2
   flex-shrink: 0;
 }
 
+/* ── Load Script row (Controller > Scroll tab) ───────────────────────────────── */
+.load-script-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.btn-load-script {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s;
+  flex-shrink: 0;
+}
+.btn-load-script:hover {
+  background: rgba(77,171,247,0.10);
+  border-color: rgba(77,171,247,0.3);
+  color: var(--accent);
+}
+.ctrl-filename {
+  font-size: 11px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* ── About tab ───────────────────────────────────────────────────────────────── */
+.about-logo {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+.about-version {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+.about-tagline {
+  font-size: 11px;
+  color: rgba(255,255,255,0.25);
+  font-style: italic;
+  margin-bottom: 4px;
+}
+.about-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 14px 0;
+}
+.about-creator {
+  margin-bottom: 14px;
+}
+.about-creator-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.about-creator-bio {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.about-footer-text {
+  font-size: 11px;
+  color: rgba(255,255,255,0.2);
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+.about-links {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.about-link {
+  font-size: 11px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 10px;
+  text-decoration: none;
+  font-family: inherit;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+.about-link:hover {
+  color: var(--accent);
+  border-color: rgba(77,171,247,0.35);
+  background: rgba(77,171,247,0.07);
+}
+
 /* ── Provider config modal ───────────────────────────────────────────────────── */
 .modal-overlay {
   display: none;

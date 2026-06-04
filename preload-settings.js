@@ -13,4 +13,8 @@ contextBridge.exposeInMainWorld('tpSettings', {
   toggleControllerProtect:  ()        => ipcRenderer.invoke('toggle-controller-protect'),
   onControllerProtectState: (cb)      => ipcRenderer.on('controller-protect-state', (_, s) => cb(s)),
   loadBrowserUrl:           (url)     => ipcRenderer.send('load-browser-url', url),
+  openFile:                 ()        => ipcRenderer.invoke('open-file'),
+  getAppVersion:            ()        => ipcRenderer.invoke('get-app-version'),
+  onLoadedScript:           (cb)      => ipcRenderer.on('ctrl-script-loaded',       (_, n) => cb(n)),
+  checkForUpdates:          ()        => ipcRenderer.invoke('check-for-updates'),
 });

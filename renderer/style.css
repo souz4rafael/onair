@@ -117,6 +117,10 @@ body {
 /* Browser mode: also hide pill */
 #app.browser-mode #scroll-pill { display: none; }
 
+/* Load-script button only relevant in Script mode */
+#app.qa-mode      #btn-open { display: none; }
+#app.browser-mode #btn-open { display: none; }
+
 /* Record button — bigger and more prominent */
 #btn-record {
   font-size: 13px;
