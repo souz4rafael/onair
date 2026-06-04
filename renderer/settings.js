@@ -93,7 +93,7 @@ function updateProtectButton(isProtected) {
   btnProtectCtrl.title       = isProtected
     ? 'Controller is hidden from screen-share — click to make visible'
     : 'Controller is visible when screen-sharing — click to hide';
-  btnProtectCtrl.classList.toggle('protect-visible', !isProtected);
+  btnProtectCtrl.classList.toggle('protect-hidden', isProtected);
 }
 
 btnProtectCtrl.addEventListener('click', async () => {

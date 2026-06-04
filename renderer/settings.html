@@ -25,18 +25,6 @@
     <!-- ── SCROLL TAB (active by default) ────────────────────────────────── -->
     <section id="tab-scroll" class="tab-panel active">
 
-      <!-- Overlay visibility control -->
-      <div class="section-header">Overlay</div>
-      <div class="field">
-        <div class="protect-row">
-          <div>
-            <strong>Screen-share visibility (this window)</strong>
-            <p class="hint-tiny" style="margin:3px 0 0">Controls whether this Controller window is visible when you share your screen.</p>
-          </div>
-          <button id="btn-protect-ctrl" class="btn-protect-toggle">👁 Visible</button>
-        </div>
-      </div>
-
       <!-- Virtual control panel -->
       <div class="section-header" style="margin-top:16px">Script control</div>
       <p class="section-hint">Control the overlay from this window — ideal for a touchscreen secondary monitor.</p>
@@ -445,9 +433,12 @@
 
     <!-- Footer -->
     <footer>
-      <span id="save-status"></span>
+      <div class="footer-left">
+        <button id="btn-protect-ctrl" class="btn-protect-toggle">👁 Visible</button>
+        <span id="save-status"></span>
+      </div>
       <div class="footer-btns">
-        <button id="btn-cancel" class="btn-secondary">Cancel</button>
+        <button id="btn-cancel" class="btn-secondary">Reset</button>
         <button id="btn-save"   class="btn-primary">Save</button>
       </div>
     </footer>

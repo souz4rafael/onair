@@ -431,25 +431,25 @@ label .btn-reset-prompt:hover { color: var(--text); border-color: rgba(255,255,2
   border-radius: 8px;
 }
 .btn-protect-toggle {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  padding: 5px 12px;
+  padding: 4px 10px;
   border-radius: 6px;
-  border: 1px solid rgba(255,107,107,0.4);
-  background: rgba(255,107,107,0.08);
-  color: rgba(255,107,107,0.9);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.15s, color 0.15s;
-  flex-shrink: 0;
-}
-.btn-protect-toggle:hover { background: rgba(255,107,107,0.18); color: #ff6b6b; }
-.btn-protect-toggle.protect-visible {
-  border-color: rgba(77,171,247,0.4);
+  border: 1px solid rgba(77,171,247,0.4);
   background: rgba(77,171,247,0.08);
   color: var(--accent);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
 }
-.btn-protect-toggle.protect-visible:hover { background: rgba(77,171,247,0.18); }
+.btn-protect-toggle:hover { background: rgba(77,171,247,0.18); }
+.btn-protect-toggle.protect-hidden {
+  border-color: rgba(255,107,107,0.4);
+  background: rgba(255,107,107,0.08);
+  color: rgba(255,107,107,0.9);
+}
+.btn-protect-toggle.protect-hidden:hover { background: rgba(255,107,107,0.18); color: #ff6b6b; }
 
 /* ── Browser tab ─────────────────────────────────────────────────────────────── */
 .browser-url-row {
@@ -561,12 +561,19 @@ footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 20px;
+  padding: 10px 20px;
   border-top: 1px solid var(--border);
   background: var(--bg);
   flex-shrink: 0;
+  gap: 8px;
 }
-.footer-btns { display: flex; gap: 8px; }
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.footer-btns { display: flex; gap: 8px; flex-shrink: 0; }
 
 #save-status {
   font-size: 11px;
