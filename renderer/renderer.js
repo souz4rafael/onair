@@ -445,10 +445,18 @@ function tokenizeScript(text) {
 
 // ── Word tracking (Web Speech API) ───────────────────────────────────────────
 
-// ── Word tracking (Whisper chunk loop) ───────────────────────────────────────
-// Records 4-second audio chunks via MediaRecorder, transcribes each one with
-// Whisper, and matches the returned words against the script to advance the
-// word highlight and scroll position.
+// ── Word tracking (Whisper stop-restart loop) ─────────────────────────────────
+// The key issue with MediaRecorder timeslice mode: only the first chunk has the
+// WebM container header — subsequent chunks are naked fragments that Whisper
+// cannot parse. Fix: stop + restart a fresh recorder every CHUNK_MS so every
+// blob is a self-contained, decodable WebM file.
+//
+// To eliminate the recording gap while Whisper processes, the next recording
+// starts immediately on stop — transcription of the previous chunk happens in
+// parallel. Only one Whisper call is in-flight at a time; out-of-order results
+// are harmless because matchWordInScript only advances forward.
+
+const TRACK_CHUNK_MS = 3500; // ms per recording slice
 
 async function startWordTracking() {
   if (!wordSpans.length) {
@@ -463,32 +471,46 @@ async function startWordTracking() {
     console.warn('[word-track] mic error:', e.message);
     return;
   }
+  recordTrackChunk();
+}
+
+async function recordTrackChunk() {
+  if (scrollMode !== 'track' || !trackStream) return;
 
   const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
     ? 'audio/webm;codecs=opus' : 'audio/webm';
-  trackMediaRecorder = new MediaRecorder(trackStream, { mimeType });
+  const chunks = [];
+  const mr     = new MediaRecorder(trackStream, { mimeType });
+  trackMediaRecorder = mr;
 
-  trackMediaRecorder.addEventListener('dataavailable', async (e) => {
-    if (scrollMode !== 'track') return;          // stopped mid-chunk
-    if (e.data.size < 1000) return;              // skip near-empty (silence)
-    try {
-      const buf    = await e.data.arrayBuffer();
-      const result = await window.tp.transcribeAudio(buf);
-      if (!result.ok || !result.text) return;
-      const words  = result.text.trim().split(/\s+/).filter(Boolean);
-      for (const word of words) {
-        const match = matchWordInScript(word, trackWordIdx);
-        if (match !== -1) {
-          advanceWordHighlight(match);
-          trackWordIdx = match + 1;
-        }
-      }
-    } catch (err) {
-      console.warn('[word-track] transcription error:', err.message);
-    }
+  await new Promise(resolve => {
+    mr.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+    mr.onstop          = resolve;
+    mr.start();
+    setTimeout(() => { if (mr.state === 'recording') { mr.requestData(); mr.stop(); } }, TRACK_CHUNK_MS);
   });
 
-  trackMediaRecorder.start(4000); // fire dataavailable every 4 s
+  // Start next recording immediately — no gap in audio capture
+  recordTrackChunk();
+
+  // Transcribe this chunk in parallel (matches advance even if slightly delayed)
+  const blob = new Blob(chunks, { type: mimeType });
+  if (blob.size < 1000 || scrollMode !== 'track') return;
+  try {
+    const buf    = await blob.arrayBuffer();
+    const result = await window.tp.transcribeAudio(buf);
+    if (!result.ok || !result.text || scrollMode !== 'track') return;
+    const words  = result.text.trim().split(/\s+/).filter(Boolean);
+    for (const word of words) {
+      const match = matchWordInScript(word, trackWordIdx);
+      if (match !== -1) {
+        advanceWordHighlight(match);
+        trackWordIdx = match + 1;
+      }
+    }
+  } catch (err) {
+    console.warn('[word-track] transcription error:', err.message);
+  }
 }
 
 function stopWordTracking() {
