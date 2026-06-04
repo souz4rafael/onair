@@ -282,6 +282,76 @@ input[type="color"] {
 .preset:hover { transform: scale(1.2); border-color: rgba(255,255,255,0.4); }
 .preset.active { border-color: #fff; }
 
+/* ── Virtual scroll controls ─────────────────────────────────────────────────── */
+.virtual-ctrl-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0 8px;
+}
+
+.ctrl-mode-pill {
+  display: flex;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.ctrl-mode-tab {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 18px;
+  border: 1px solid transparent;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.ctrl-mode-tab:hover:not(.active) {
+  background: rgba(255,255,255,0.06);
+  color: var(--text);
+}
+.ctrl-mode-tab.active {
+  color: var(--accent);
+  background: rgba(77,171,247,0.12);
+  border-color: rgba(77,171,247,0.35);
+}
+
+.vscroll-row {
+  display: flex;
+  gap: 20px;
+}
+
+.vscroll-btn {
+  width: 88px;
+  height: 88px;
+  font-size: 30px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s, transform 0.08s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+.vscroll-btn:hover {
+  background: rgba(77,171,247,0.12);
+  border-color: rgba(77,171,247,0.4);
+  color: var(--accent);
+}
+.vscroll-btn:active {
+  background: rgba(77,171,247,0.25);
+  transform: scale(0.94);
+}
+
 /* ── Radio group (recording source) ─────────────────────────────────────────── */
 .radio-group {
   display: flex;

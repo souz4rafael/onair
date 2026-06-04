@@ -3,25 +3,25 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>onAIr — Settings</title>
+  <title>onAIr — Controller</title>
   <link rel="stylesheet" href="settings.css"/>
 </head>
 <body>
   <div id="app">
     <header>
-      <h1>onAIr Settings</h1>
+      <h1>onAIr Controller</h1>
     </header>
 
-    <!-- Tabs -->
+    <!-- Tabs — Scroll is default for Controller use -->
     <nav id="tabs">
-      <button class="tab active" data-tab="ai">🤖 AI</button>
+      <button class="tab active" data-tab="scroll">📜 Scroll</button>
+      <button class="tab"        data-tab="ai">🤖 AI</button>
       <button class="tab"        data-tab="audio">🎤 Audio</button>
       <button class="tab"        data-tab="appearance">🎨 Appearance</button>
-      <button class="tab"        data-tab="scroll">📜 Scroll</button>
     </nav>
 
     <!-- AI tab -->
-    <section id="tab-ai" class="tab-panel active">
+    <section id="tab-ai" class="tab-panel">
 
       <div class="field">
         <label for="ai-provider">Provider</label>
@@ -227,10 +227,28 @@
 
     </section>
 
-    <!-- Scroll tab -->
-    <section id="tab-scroll" class="tab-panel">
+    <!-- Scroll tab — active by default for Controller use -->
+    <section id="tab-scroll" class="tab-panel active">
 
-      <div class="section-header">Manual scroll</div>
+      <!-- ── Virtual control panel ───────────────────────────────────────────── -->
+      <div class="section-header">Script control</div>
+      <p class="section-hint">Control the overlay from this window — ideal for a touchscreen secondary monitor.</p>
+
+      <div class="virtual-ctrl-wrap">
+        <!-- Mode pill -->
+        <div class="ctrl-mode-pill" id="ctrl-mode-pill">
+          <button class="ctrl-mode-tab active" data-mode="manual">⏸ Manual</button>
+          <button class="ctrl-mode-tab"        data-mode="auto">▶ Auto</button>
+          <button class="ctrl-mode-tab"        data-mode="voice">🎙 Voice</button>
+        </div>
+        <!-- Scroll up/down buttons -->
+        <div class="vscroll-row">
+          <button id="btn-vscroll-up"   class="vscroll-btn" title="Scroll up">▲</button>
+          <button id="btn-vscroll-down" class="vscroll-btn" title="Scroll down">▼</button>
+        </div>
+      </div>
+
+      <div class="section-header" style="margin-top:20px">Manual scroll</div>
       <div class="field slider-field">
         <label>Scroll step <span class="val" id="val-scroll">120px</span></label>
         <input type="range" id="sl-scroll" min="40" max="400" step="10" value="120"/>

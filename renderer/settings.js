@@ -76,6 +76,22 @@ const btnSave    = document.getElementById('btn-save');
 const btnCancel  = document.getElementById('btn-cancel');
 const saveStatus = document.getElementById('save-status');
 
+// ── Virtual scroll controls ───────────────────────────────────────────────────
+document.getElementById('btn-vscroll-up').addEventListener('click', () => {
+  window.tpSettings.scrollBy(-parseInt(slScroll.value, 10));
+});
+document.getElementById('btn-vscroll-down').addEventListener('click', () => {
+  window.tpSettings.scrollBy(+parseInt(slScroll.value, 10));
+});
+
+document.querySelectorAll('.ctrl-mode-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.ctrl-mode-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    window.tpSettings.setScrollMode(btn.dataset.mode);
+  });
+});
+
 // ── Slider live labels + live preview ────────────────────────────────────────
 slOpacity.addEventListener('input', () => {
   valOpacity.textContent = `${slOpacity.value}%`;

@@ -64,14 +64,56 @@ body {
   -webkit-app-region: drag;
 }
 
-/* Centre group: record button — truly centred */
+/* Centre group: mode-specific controls — truly centred */
 #cb-center {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 auto;
+  flex: 1;
   -webkit-app-region: no-drag;
 }
+
+/* ── Scroll mode pill tabs (Script mode only) ────────────────────────────── */
+#scroll-pill {
+  display: flex;
+  align-items: center;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 20px;
+  padding: 2px;
+  gap: 1px;
+}
+
+.scroll-tab {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  color: rgba(255,255,255,0.45);
+  background: transparent;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  white-space: nowrap;
+}
+.scroll-tab:hover:not(.active) {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.85);
+}
+.scroll-tab.active {
+  color: var(--accent);
+  background: rgba(77,171,247,0.12);
+  border-color: rgba(77,171,247,0.35);
+}
+/* Voice mode gets amber accent */
+#app[data-scroll-mode="voice"] .scroll-tab[data-mode="voice"].active {
+  color: #fcc419;
+  background: rgba(252,196,25,0.10);
+  border-color: rgba(252,196,25,0.35);
+}
+
+/* Q&A mode: hide pill, show record */
+#app.qa-mode #scroll-pill { display: none; }
 
 /* Record button — bigger and more prominent */
 #btn-record {

@@ -11,6 +11,8 @@ contextBridge.exposeInMainWorld('tp', {
   onQAStatus:        (cb) => ipcRenderer.on('qa-status',        (_, s) => cb(s)),
   onQAResult:        (cb) => ipcRenderer.on('qa-result',        (_, r) => cb(r)),
   onSwitchMode:      (cb) => ipcRenderer.on('switch-mode',      ()     => cb()),
+  onScrollBy:        (cb) => ipcRenderer.on('scroll-by',        (_, d) => cb(d)),
+  onSetScrollMode:   (cb) => ipcRenderer.on('set-scroll-mode',  (_, m) => cb(m)),
   openFile:          ()        => ipcRenderer.invoke('open-file'),
   quit:              ()        => ipcRenderer.invoke('quit'),
   minimize:          ()        => ipcRenderer.invoke('minimize'),

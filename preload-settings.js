@@ -6,4 +6,6 @@ contextBridge.exposeInMainWorld('tpSettings', {
   saveConfig:        (cfg)     => ipcRenderer.invoke('save-config', cfg),
   testConnection:    (args)    => ipcRenderer.invoke('test-connection', args),
   previewAppearance: (partial) => ipcRenderer.send('preview-appearance', partial),
+  scrollBy:          (delta)   => ipcRenderer.send('scroll-by', delta),
+  setScrollMode:     (mode)    => ipcRenderer.send('set-scroll-mode', mode),
 });

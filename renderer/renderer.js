@@ -14,8 +14,7 @@ const btnRecord   = document.getElementById('btn-record');
 const btnProtect  = document.getElementById('btn-protect');
 const progFill    = document.getElementById('progress-fill');
 
-// Scroll mode DOM refs
-const btnScrollMode = document.getElementById('btn-scroll-mode');
+// Scroll mode pill tab refs are querySelectorAll('.scroll-tab') — handled in setScrollMode
 
 // Q&A DOM refs
 const qaPanel     = document.getElementById('qa-panel');
@@ -38,8 +37,8 @@ let savedAudioDeviceId    = ''; // set via apply-config when settings are saved
 let savedRecordingSource  = 'microphone'; // 'microphone' | 'system' | 'both'
 
 // Scroll mode state
-const SCROLL_MODES  = ['manual', 'auto', 'voice', 'track'];
-const SCROLL_ICONS  = { manual: '⏸', auto: '▶', voice: '🎙', track: '👁' };
+const SCROLL_MODES  = ['manual', 'auto', 'voice']; // 'track' disabled — code preserved below
+const SCROLL_ICONS  = { manual: '⏸', auto: '▶', voice: '🎙' };
 let scrollMode      = 'manual';
 let scrollSpeed     = 50;     // px per second
 let autoScrollRaf   = null;
@@ -326,12 +325,23 @@ btnMinimize.addEventListener('click', () => window.tp.minimize());
 // ── Resize observer ───────────────────────────────────────────────────────────
 new ResizeObserver(() => recalcMaxScroll()).observe(viewportEl);
 
-// ── Scroll modes ──────────────────────────────────────────────────────────────
+// ── Scroll mode pill tabs ─────────────────────────────────────────────────────
 
-btnScrollMode.addEventListener('click', () => {
-  const idx  = SCROLL_MODES.indexOf(scrollMode);
-  const next = SCROLL_MODES[(idx + 1) % SCROLL_MODES.length];
-  setScrollMode(next);
+document.querySelectorAll('.scroll-tab').forEach(btn => {
+  btn.addEventListener('click', () => setScrollMode(btn.dataset.mode));
+});
+
+// Remote scroll-by from Controller window
+window.tp.onScrollBy(delta => {
+  recalcMaxScroll();
+  scrollY = Math.max(0, Math.min(maxScroll, scrollY + delta));
+  applyScroll();
+  updateProgress();
+});
+
+// Remote mode change from Controller window
+window.tp.onSetScrollMode(mode => {
+  if (SCROLL_MODES.includes(mode)) setScrollMode(mode);
 });
 
 function setScrollMode(mode) {
@@ -342,13 +352,15 @@ function setScrollMode(mode) {
   wordSpans.forEach(s => s.classList.remove('word-current', 'word-spoken'));
 
   scrollMode = mode;
-  btnScrollMode.textContent = `${SCROLL_ICONS[mode]} ${mode.charAt(0).toUpperCase() + mode.slice(1)}`;
-  btnScrollMode.title = `Scroll mode: ${mode} — click to cycle`;
+  // Update pill tab active state
+  document.querySelectorAll('.scroll-tab').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.mode === mode)
+  );
   appEl.dataset.scrollMode = mode;
 
   if (mode === 'auto')  { startAutoScroll(); }
   if (mode === 'voice') { startVoiceMonitor(); startAutoScroll(); }
-  if (mode === 'track') { startWordTracking(); }
+  // 'track' disabled — startWordTracking() available but not wired to UI
 }
 
 // ── Auto-scroll (RAF loop) ────────────────────────────────────────────────────

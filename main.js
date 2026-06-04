@@ -223,7 +223,7 @@ function createSettingsWindow() {
   settingsWin = new BrowserWindow({
     width: 520,
     height: 640,
-    title: 'onAIr — Settings',
+    title: 'onAIr — Controller',
     resizable: false,
     maximizable: false,
     alwaysOnTop: false,
@@ -252,7 +252,7 @@ function createTray() {
     { label: 'onAIr', enabled: false },
     { type: 'separator' },
     { label: 'Load Script…',      click: () => openFilePicker() },
-    { label: 'Settings…',         click: () => createSettingsWindow() },
+    { label: 'Controller…',       click: () => createSettingsWindow() },
     { type: 'separator' },
     { label: 'Toggle Move Mode',  click: () => toggleMoveMode() },
     { type: 'separator' },
@@ -577,10 +577,14 @@ ipcMain.on('update-appearance', (_, partial) => {
   config.appearance = { ...config.appearance, ...partial };
 });
 
-// Live preview from Settings window — applies to overlay without saving
+// Live preview from Controller window — applies to overlay without saving
 ipcMain.on('preview-appearance', (_, partial) => {
   win?.webContents.send('apply-config', partial);
 });
+
+// Controller → overlay: virtual scroll and mode change
+ipcMain.on('scroll-by',       (_, delta) => { win?.webContents.send('scroll-by',       delta); });
+ipcMain.on('set-scroll-mode', (_, mode)  => { win?.webContents.send('set-scroll-mode',  mode);  });
 
 // ── IPC: settings window ──────────────────────────────────────────────────────
 
