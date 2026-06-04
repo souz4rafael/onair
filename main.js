@@ -236,7 +236,8 @@ function createWindow() {
     callback(permission === 'media');
   });
   protected_ = true;
-  win.setIgnoreMouseEvents(true, { forward: true });
+  moveModeActive = true;                     // start in move mode — user can drag/resize immediately
+  win.setIgnoreMouseEvents(false);           // interactive by default
   win.setAlwaysOnTop(true, 'screen-saver');
 
   win.webContents.on('did-finish-load', () => {
@@ -246,6 +247,7 @@ function createWindow() {
       audioOutputDeviceId:  config.audioOutputDeviceId,
       audioRecordingSource: config.audioRecordingSource,
     });
+    win.webContents.send('move-mode', true); // tell renderer we start in move mode
     const file = findTxtArg(process.argv);
     if (file) sendScript(file);
   });
