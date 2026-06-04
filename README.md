@@ -3,7 +3,55 @@
 **onAIr** is a transparent, always-on-top teleprompter overlay for Windows — built with Electron.  
 Load a presentation script, keep it floating above your screen share, and use AI to capture and answer client questions in real time.
 
-![onAIr overlay](assets/app-icon.png)
+---
+
+## Screenshots
+
+### Script mode — read your script while presenting
+
+![onAIr overlay — Script mode](assets/screenshots/screenshot-overlay-script.png)
+
+*The transparent overlay floats above your screen share. Clients don't see it. The **Manual / Auto / Voice** pill controls how the script scrolls.*
+
+---
+
+### Q&A mode — AI-powered answers in real time
+
+![onAIr overlay — Q&A mode](assets/screenshots/screenshot-overlay-qa.png)
+
+*Press `Ctrl+Alt+R` to record a client question. onAIr transcribes it via Whisper and returns a suggested answer in seconds.*
+
+---
+
+### Browser mode — embed any web page in the overlay
+
+![onAIr overlay — Browser mode](assets/screenshots/screenshot-overlay-browser.png)
+
+*Type a URL in the Controller → Browser tab and the overlay switches to an embedded browser. Useful for showing reference docs, slides, or demos.*
+
+---
+
+### Controller — script & scroll controls
+
+![onAIr Controller — Scroll tab](assets/screenshots/screenshot-controller-scroll.png)
+
+*The Controller opens automatically alongside the overlay. Large ▲▼ buttons are touch-friendly for a secondary screen. The script file picker keeps everything in sync.*
+
+---
+
+### Controller — AI provider setup
+
+![onAIr Controller — AI tab](assets/screenshots/screenshot-controller-ai.png)
+
+*Choose a Chat provider and a Transcription provider independently. Click ⚙ Configure to enter credentials and test the connection — no inline credential forms cluttering the UI.*
+
+---
+
+### Controller — browser quick links
+
+![onAIr Controller — Browser tab](assets/screenshots/screenshot-controller-browser.png)
+
+*Type any URL or tap a quick link to load a page into the overlay. Quick links are editable and saved with your config (max 10).*
 
 ---
 
